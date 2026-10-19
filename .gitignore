@@ -1,0 +1,14 @@
+# هرگز توکن یا رمز داخل مخزن نگذارید
+*.token
+Token*.txt
+token*.txt
+.env
+.env.*
+secrets/
+*.pem
+*.key
+# فایل‌های تولیدی سنگین (در صورت نیاز با Git LFS یا فضای جدا)
+dist/
+out/
+*.mp4
+*.wav
