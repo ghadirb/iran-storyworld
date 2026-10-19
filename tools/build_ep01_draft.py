@@ -14,7 +14,7 @@ TIMELINE = {
   "s03": ([5, 6, 7],  "03.png", None),
   "s04": ([8, 9, 10, 11], "05.png", "05.mp4"),
   "s05": ([12, 13, 14],   "06.png", "06.mp4"),
-  "s06": ([15, 16],   "07.png", None),
+  "s06": ([15, 16],   "07.png", "07.mp4"),
 }
 W, H, FPS = 1280, 720, 24
 def run(*a): subprocess.run(a, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
