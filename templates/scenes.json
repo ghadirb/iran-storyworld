@@ -1,0 +1,16 @@
+{
+  "episode": "ch01-ep01",
+  "scenes": [
+    {
+      "id": "s01",
+      "duration_sec": 8,
+      "narration": "",
+      "dialogue": [],
+      "camera": "",
+      "sfx": "",
+      "image_id": "ep01_s01",
+      "claims": [],
+      "tags": ["تخیلی"]
+    }
+  ]
+}

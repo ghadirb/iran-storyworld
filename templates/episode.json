@@ -1,0 +1,23 @@
+{
+  "id": "ch01-ep01",
+  "chapter": "ch01",
+  "number": 1,
+  "title_fa": "",
+  "status": "draft",
+  "approved_by_owner": false,
+  "audience": { "core": "7-10", "deep_layer": "11-12" },
+  "duration_target_sec": 60,
+  "duration_actual_sec": null,
+  "claims": ["C-00"],
+  "characters": ["tirdad", "henu"],
+  "objects": ["obj-unfinished-relief"],
+  "scenes_file": "scenes.json",
+  "layers": {
+    "story": "story.md",
+    "image_prompts": "image_prompts.md",
+    "deep_layer": "deep_layer.md",
+    "audio": { "narration": null, "music": null, "sfx": null },
+    "game_hooks": "game_hooks.json"
+  },
+  "next_hook": ""
+}
