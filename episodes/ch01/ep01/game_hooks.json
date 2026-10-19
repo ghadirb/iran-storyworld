@@ -1,0 +1,8 @@
+{
+  "episode": "ch01-ep01",
+  "status": "idea-only",
+  "hooks": [
+    {"type":"order_steps","prompt_fa":"مراحل کار سنگ‌تراش را مرتب کن","items":["شکل","جزئیات","صاف‌کردن"]},
+    {"type":"find_in_image","prompt_fa":"ذرهٔ آبی کجاست؟","image_id":"ep01_s05"}
+  ]
+}

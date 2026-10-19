@@ -1,0 +1,24 @@
+{
+  "id": "ch01-ep01",
+  "chapter": "ch01",
+  "number": 1,
+  "title_fa": "راز نقش نیمه‌تمام",
+  "status": "draft",
+  "approved_by_owner": false,
+  "audience": { "core": "7-10", "deep_layer": "11-12" },
+  "duration_target_sec": 60,
+  "duration_actual_sec": null,
+  "text_chars": 522,
+  "claims": ["C-01","C-02","C-06","C-08","C-09","C-23","C-24"],
+  "characters": ["tirdad", "henu", "father"],
+  "objects": ["obj-unfinished-relief","obj-blue-speck","obj-edge-mark","obj-finger-line"],
+  "scenes_file": "scenes.json",
+  "layers": {
+    "story": "story.md",
+    "image_prompts": "image_prompts.md",
+    "deep_layer": "deep_layer.md",
+    "audio": { "narration": null, "music": null, "sfx": null },
+    "game_hooks": "game_hooks.json"
+  },
+  "next_hook": "نشان عجیب روی لبهٔ سنگ (obj-edge-mark)"
+}
