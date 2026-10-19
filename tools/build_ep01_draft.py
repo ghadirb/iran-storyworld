@@ -5,7 +5,7 @@
 import glob, json, os, subprocess, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 A, I, V, OUT = (os.path.join(ROOT, p) for p in ("assets/audio", "assets/images", "assets/video", "out"))
-GAP = 0.25   # مکث بین خط‌ها (ثانیه)
+GAP = 0.35   # مکث بین خط‌ها (ثانیه)
 TAIL = 0.5   # مکث پایان هر نما
 # نما: (شمارهٔ فایل‌های صوتی، تصویر ثابت، کلیپ اختیاری)
 TIMELINE = {
@@ -13,8 +13,8 @@ TIMELINE = {
   "s02": ([2, 3, 4],  "04.png", "04.mp4"),
   "s03": ([5, 6, 7],  "03.png", None),
   "s04": ([8, 9, 10, 11], "05.png", "05.mp4"),
-  "s05": ([12, 13, 14],   "06.png", "06.mp4"),
-  "s06": ([15, 16],   "07.png", "07.mp4"),
+  "s05": ([12, 18, 13, 14], "06.png", "06.mp4"),   # ترتیب روایی: روایت، پرسش، پاسخ، توضیح
+  "s06": ([17, 15, 16], "07.png", "07.mp4"),
 }
 W, H, FPS = 1280, 720, 24
 def run(*a): subprocess.run(a, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -37,9 +37,23 @@ for sid,(auds,img,clip) in TIMELINE.items():
     d=dur(wav); out=os.path.join(OUT,f"{sid}.mp4")
     sc=f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps={FPS}"
     if clip:
-        run("ffmpeg","-y","-i",os.path.join(V,clip),"-i",wav,"-filter_complex",
-            f"[0:v]{sc},tpad=stop_mode=clone:stop_duration={d}[v]","-map","[v]","-map","1:a","-t",f"{d:.2f}",
-            "-c:v","libx264","-preset","veryfast","-crf","23","-pix_fmt","yuv420p","-c:a","aac",out)
+        cp=os.path.join(V,clip); cd=dur(cp)
+        vid=os.path.join(OUT,f"{sid}_v.mp4")
+        if d>cd+0.05:
+            # بعد از پایان کلیپ، آخرین فریم با زوم بسیار آرام نگه داشته می‌شود (نه کشیده‌شدن و نه کندکردن صدا)
+            last=os.path.join(OUT,f"{sid}_last.png"); rest=d-cd; n=int(rest*FPS)+1
+            run("ffmpeg","-y","-sseof","-0.1","-i",cp,"-frames:v","1","-update","1",last)
+            tail=os.path.join(OUT,f"{sid}_tail.mp4")
+            run("ffmpeg","-y","-loop","1","-i",last,"-filter_complex",
+                f"[0:v]scale=2*{W}:-2:force_original_aspect_ratio=increase,crop=2*{W}:2*{H},zoompan=z='1+0.04*on/{n}':d={n}:s={W}x{H}:fps={FPS},setsar=1[v]",
+                "-map","[v]","-t",f"{rest:.2f}","-c:v","libx264","-preset","veryfast","-crf","23","-pix_fmt","yuv420p",tail)
+            head=os.path.join(OUT,f"{sid}_head.mp4")
+            run("ffmpeg","-y","-i",cp,"-vf",sc,"-an","-c:v","libx264","-preset","veryfast","-crf","23","-pix_fmt","yuv420p",head)
+            ll=os.path.join(OUT,f"{sid}_vl.txt"); open(ll,"w").write(f"file '{head}'\nfile '{tail}'\n")
+            run("ffmpeg","-y","-f","concat","-safe","0","-i",ll,"-c","copy",vid)
+        else:
+            run("ffmpeg","-y","-i",cp,"-vf",sc,"-an","-t",f"{d:.2f}","-c:v","libx264","-preset","veryfast","-crf","23","-pix_fmt","yuv420p",vid)
+        run("ffmpeg","-y","-i",vid,"-i",wav,"-map","0:v","-map","1:a","-t",f"{d:.2f}","-c:v","copy","-c:a","aac",out)
     else:
         n=int(d*FPS)
         run("ffmpeg","-y","-loop","1","-i",os.path.join(I,img),"-i",wav,"-filter_complex",
