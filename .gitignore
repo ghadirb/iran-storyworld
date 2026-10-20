@@ -12,3 +12,12 @@ dist/
 out/
 *.mp4
 *.wav
+# اندروید
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/videos/*.mp4
+android/app/src/main/assets/posters/*.jpg
+*.jks
+*.keystore
