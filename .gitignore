@@ -21,3 +21,4 @@ android/app/src/main/assets/videos/*.mp4
 android/app/src/main/assets/posters/*.jpg
 *.jks
 *.keystore
+android/build-*.log

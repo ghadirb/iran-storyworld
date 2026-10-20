@@ -8,7 +8,7 @@ on:
       - ".github/workflows/build-android.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -68,7 +68,8 @@ jobs:
 
       - name: Build debug APK (for testing)
         working-directory: android
-        run: gradle --no-daemon assembleDebug
+        shell: bash
+        run: gradle --no-daemon --console=plain assembleDebug 2>&1 | tee build-debug.log
 
       - name: Build signed release APK (for Myket)
         if: steps.key.outputs.has_key == 'true'
@@ -78,7 +79,8 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle --no-daemon assembleRelease
+        shell: bash
+        run: gradle --no-daemon --console=plain assembleRelease 2>&1 | tee build-release.log
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -94,3 +96,19 @@ jobs:
           name: riwayat-iran-release-apk
           path: android/app/build/outputs/apk/release/*.apk
           retention-days: 30
+
+      - name: Publish build log to ci-logs branch
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/l
+          cp android/build-*.log /tmp/l/ 2>/dev/null || true
+          ls -la android/app/build/outputs/apk/*/ > /tmp/l/apk-list.txt 2>&1 || true
+          git config user.name "ci-bot"; git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-logs
+          git rm -rf . -q
+          cp /tmp/l/* . 2>/dev/null || true
+          echo "run ${{ github.run_id }}" > RUN.txt
+          git add -A
+          git commit -qm "build log ${{ github.run_id }}"
+          git push -f origin ci-logs
