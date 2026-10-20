@@ -1,6 +1,17 @@
 package ir.ghadirb.riwayatiran
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.BitmapFactory
+import android.media.AudioManager
+import android.provider.Settings
+import android.view.WindowManager
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -191,6 +202,13 @@ private fun PlayerScreen(
     val ctx = LocalContext.current
     var ended by remember(ep.id) { mutableStateOf(false) }
     var showParents by remember { mutableStateOf(false) }
+    var hud by remember { mutableStateOf<String?>(null) }
+    val pvRef = remember { arrayOfNulls<PlayerView>(1) }
+    val activity = remember(ctx) { ctx.findActivity() }
+    val audio = remember(ctx) { ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    DisposableEffect(Unit) {
+        onDispose { setBrightness(activity, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE) }
+    }
     val player = remember(ep.id) {
         ExoPlayer.Builder(ctx).build().apply {
             setMediaItem(MediaItem.fromUri("asset:///" + ep.video))
@@ -202,6 +220,7 @@ private fun PlayerScreen(
         val l = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) { ended = true; onWatched(ep.id) }
+                if (state == Player.STATE_READY) ended = false
             }
         }
         player.addListener(l)
@@ -220,13 +239,82 @@ private fun PlayerScreen(
             Spacer(Modifier.weight(1f))
             TextButton(onClick = { showParents = true }) { Text("ⓘ والدین", color = Sand, fontSize = 14.sp) }
         }
-        AndroidView(
-            factory = { PlayerView(it).apply { this.player = player; useController = true } },
-            update = { it.player = player },
-            modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-        )
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+            AndroidView(
+                factory = { PlayerView(it).apply { this.player = player; useController = true; pvRef[0] = this } },
+                update = { it.player = player },
+                modifier = Modifier.fillMaxSize(),
+            )
+            // لایهٔ حرکات: نوار کنترل پایین آزاد می‌ماند
+            Box(
+                Modifier.fillMaxSize().padding(bottom = 64.dp)
+                    .pointerInput(ep.id) {
+                        detectTapGestures(onTap = {
+                            pvRef[0]?.let { v -> if (v.isControllerFullyVisible) v.hideController() else v.showController() }
+                        })
+                    }
+                    .pointerInput(ep.id) {
+                        // 0 نامشخص، 1 جلو/عقب، 2 صدا (راست)، 3 نور (چپ)
+                        var mode = 0
+                        var startX = 0f
+                        var accX = 0f
+                        var accY = 0f
+                        var volStart = 0f
+                        var briStart = 0.5f
+                        var seekStart = 0L
+                        var seekTarget = 0L
+                        detectDragGestures(
+                            onDragStart = { o -> mode = 0; startX = o.x; accX = 0f; accY = 0f },
+                            onDragEnd = { if (mode == 1) player.seekTo(seekTarget); hud = null; mode = 0 },
+                            onDragCancel = { hud = null; mode = 0 },
+                        ) { change, drag ->
+                            change.consume()
+                            accX += drag.x
+                            accY += drag.y
+                            val w = size.width.toFloat()
+                            val h = size.height.toFloat()
+                            if (mode == 0) {
+                                if (abs(accX) < 14f && abs(accY) < 14f) return@detectDragGestures
+                                mode = if (abs(accX) > abs(accY)) 1 else if (startX > w / 2f) 2 else 3
+                                when (mode) {
+                                    1 -> { seekStart = player.currentPosition; seekTarget = seekStart }
+                                    2 -> volStart = audio.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()
+                                    3 -> briStart = currentBrightness(activity)
+                                }
+                            }
+                            when (mode) {
+                                1 -> {
+                                    val dur = player.duration
+                                    val maxPos = if (dur > 0) dur else Long.MAX_VALUE
+                                    seekTarget = (seekStart + accX / w * 60000f).toLong().coerceIn(0L, maxPos)
+                                    hud = (if (seekTarget >= seekStart) "⏩ " else "⏪ ") + fmtTime(seekTarget)
+                                }
+                                2 -> {
+                                    val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                                    val v = (volStart + (-accY / h) * max * 1.5f).coerceIn(0f, max.toFloat())
+                                    audio.setStreamVolume(AudioManager.STREAM_MUSIC, v.roundToInt(), 0)
+                                    hud = "🔊 ${(v / max * 100f).roundToInt()}٪"
+                                }
+                                3 -> {
+                                    val b = (briStart + (-accY / h) * 1.5f).coerceIn(0.02f, 1f)
+                                    setBrightness(activity, b)
+                                    hud = "☀ ${(b * 100f).roundToInt()}٪"
+                                }
+                            }
+                        }
+                    },
+            )
+            hud?.let {
+                Box(
+                    Modifier.align(Alignment.Center)
+                        .background(Color(0xAA000000), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                ) { Text(it, color = Color.White, fontSize = 22.sp) }
+            }
+        }
         Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("قسمت ${ep.number}: ${ep.title}", color = Gold, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text("کشیدن روی تصویر: راست = صدا، چپ = نور، چپ/راست = جلو و عقب", color = Sand.copy(alpha = 0.7f), fontSize = 12.sp, textAlign = TextAlign.Center)
             if (ended) {
                 Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -257,4 +345,35 @@ private fun PlayerScreen(
             },
         )
     }
+}
+
+
+private fun Context.findActivity(): Activity? {
+    var c: Context = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
+}
+
+private fun currentBrightness(a: Activity?): Float {
+    val cur = a?.window?.attributes?.screenBrightness ?: -1f
+    if (cur >= 0f) return cur
+    return try {
+        Settings.System.getInt(a!!.contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+    } catch (e: Exception) { 0.5f }
+}
+
+private fun setBrightness(a: Activity?, v: Float) {
+    a?.window?.let { w ->
+        val lp = w.attributes
+        lp.screenBrightness = v
+        w.attributes = lp
+    }
+}
+
+private fun fmtTime(ms: Long): String {
+    val s = (ms / 1000).toInt()
+    return "%d:%02d".format(s / 60, s % 60)
 }
