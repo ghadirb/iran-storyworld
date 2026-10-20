@@ -1,5 +1,4 @@
-
-name: Build Episode 1 Preview
+name: Build Episode 1 Preview v3
 
 on:
   workflow_dispatch:
@@ -22,13 +21,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Build preview
-        run: python3 tools/build_ep01_draft.py
+      - name: Build preview with music and sound effects
+        run: python3 tools/build_ep01_draft_v3.py
 
       - name: Save preview video
         uses: actions/upload-artifact@v4
         with:
-          name: episode-1-preview
-          path: out/ep01_draft.mp4
+          name: episode-1-preview-v3
+          path: out/ep01_draft_v3.mp4
           if-no-files-found: error
           retention-days: 7
