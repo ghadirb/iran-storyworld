@@ -1,0 +1,49 @@
+name: Build Episode 2 Preview v2
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/build_ep02_draft_v2.py"
+      - "episodes/ch01/ep02/**"
+      - "assets/audio/**"
+      - "assets/images/**"
+      - "assets/video/**"
+      - ".github/workflows/build-episode-2-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Build Episode 2 preview
+        run: python3 tools/build_ep02_draft_v2.py
+
+      - name: Validate video and report
+        run: |
+          ffprobe -v error -show_entries format=duration:stream=codec_name,width,height -of json out/ep02_preview_v2.mp4
+          test -s out/ep02_preview_v2_report.json
+          python3 -m json.tool out/ep02_preview_v2_report.json >/dev/null
+
+      - name: Upload preview and report
+        uses: actions/upload-artifact@v4
+        with:
+          name: episode-2-preview-v2
+          path: |
+            out/ep02_preview_v2.mp4
+            out/ep02_preview_v2_report.json
+          if-no-files-found: error
+          retention-days: 14
