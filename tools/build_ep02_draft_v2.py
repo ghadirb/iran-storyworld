@@ -9,7 +9,7 @@ VIDEOS = os.path.join(ROOT, "assets", "video")
 OUT = os.path.join(ROOT, "out")
 TMP = os.path.join(OUT, "ep02_v2_tmp")
 WIDTH, HEIGHT, FPS = 1280, 720, 24
-DIALOGUE_GAP, VOICE_TAIL, TRANSITION = 0.28, 0.30, 0.20
+DIALOGUE_GAP, VOICE_TAIL, TRANSITION = 0.42, 0.45, 0.20
 VIDEO_ENCODE = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p"]
 
 # فایل 30 با نام اشتباه «20.بعضی‌ها...» ذخیره شده است؛ نام موجود را حفظ می‌کنیم.
@@ -168,7 +168,7 @@ def main():
         f"[3:a]volume=0.16,adelay={hammer_delay_ms}|{hammer_delay_ms}[hammer];"
         "[0:a]volume=1.0[voice];"
         "[voice][music][ambience][hammer]amix=inputs=4:duration=first:dropout_transition=2,"
-        "alimiter=limit=0.95[aout]"
+        "loudnorm=I=-18:TP=-1.5:LRA=11,alimiter=limit=0.95[aout]"
     )
     run("ffmpeg", "-y", "-i", voice_video, "-stream_loop", "-1", "-i", music,
         "-stream_loop", "-1", "-i", ambience, "-i", hammer, "-filter_complex", mix,
