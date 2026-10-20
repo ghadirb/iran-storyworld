@@ -76,16 +76,16 @@ def main():
     # Music is ducked under narration; ambience is intentionally subtle.
     # The hammer SFX is placed in the stoneworking scene, not across the whole film.
     filters = (
-        "[0:a]aresample=44100,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice];"
+        "[0:a]aresample=44100,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,asplit=2[voice_mix][voice_sc];"
         f"[1:a]aresample=44100,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,"
         f"volume=0.12,afade=t=in:st=0:d=2,afade=t=out:st={fade_out_start:.3f}:d=3[music];"
-        "[music][voice]sidechaincompress=threshold=0.025:ratio=8:attack=20:release=500[musicduck];"
+        "[music][voice_sc]sidechaincompress=threshold=0.025:ratio=8:attack=20:release=500[musicduck];"
         f"[2:a]aresample=44100,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,"
         f"volume=0.07,atrim=duration={video_duration:.3f}[ambience];"
         f"[3:a]aresample=44100,aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,"
         f"volume=0.22,adelay={hammer_delay_ms}|{hammer_delay_ms},apad,"
         f"atrim=duration={video_duration:.3f}[hammer];"
-        "[voice][musicduck][ambience][hammer]amix=inputs=4:duration=first:dropout_transition=2:normalize=0,"
+        "[voice_mix][musicduck][ambience][hammer]amix=inputs=4:duration=first:dropout_transition=2:normalize=0,"
         "alimiter=limit=0.95[aout]"
     )
 
