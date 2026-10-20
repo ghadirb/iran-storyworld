@@ -1,0 +1,28 @@
+name: Build Episode 1 Preview v4 (Henu ending)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Build preview with new ending audio 19
+        run: python3 tools/build_ep01_draft_v4.py
+      - name: Save preview video
+        uses: actions/upload-artifact@v4
+        with:
+          name: episode-1-preview-v4-henu-ending
+          path: out/ep01_draft_v4.mp4
+          if-no-files-found: error
+          retention-days: 14
