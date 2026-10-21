@@ -31,14 +31,14 @@ jobs:
           set -euo pipefail
           mkdir -p out build
           : > build/manifest.txt
-          grep -v '^\s*#' tools/build_map.txt | grep -v '^\s*$' | while read -r id script outfile; do
+          while read -r id script outfile; do
             echo "== $id"
-            python3 "tools/$script"
-            ffmpeg -y -loglevel error -i "$outfile" -c:v libx264 -crf 26 -preset medium -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart "build/$id.mp4"
-            ffmpeg -y -loglevel error -ss 6 -i "build/$id.mp4" -frames:v 1 -vf scale=640:-2 -q:v 4 "build/$id.jpg"
+            python3 "tools/$script" < /dev/null
+            ffmpeg -nostdin -y -loglevel error -i "$outfile" -c:v libx264 -crf 26 -preset medium -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart "build/$id.mp4"
+            ffmpeg -nostdin -y -loglevel error -ss 6 -i "build/$id.mp4" -frames:v 1 -vf scale=640:-2 -q:v 4 "build/$id.jpg"
             echo "videos/$id.mp4 build/$id.mp4 video/mp4" >> build/manifest.txt
             echo "posters/$id.jpg build/$id.jpg image/jpeg" >> build/manifest.txt
-          done
+          done < <(grep -v '^\s*#' tools/build_map.txt | grep -v '^\s*$')
           # کاتالوگ آخر می‌آید تا قسمت فقط بعد از آماده‌شدن فایل‌هایش دیده شود
           echo "catalog.json catalog/catalog.json application/json" >> build/manifest.txt
           ls -la build
