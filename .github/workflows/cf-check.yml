@@ -14,7 +14,9 @@ jobs:
         run: |
           i=0
           for t in "$T1" "$T2" "$T3"; do
-            i=$((i+1)); echo "== candidate $i"
-            echo -n "verify: "; curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/user/tokens/verify | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), d.get("result",{}).get("status"), [e.get("message") for e in d.get("errors",[])])'
-            echo -n "accounts: "; curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/accounts | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), [(a["id"],a["name"]) for a in d.get("result",[])])'
+            i=$((i+1))
+            v=$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/user/tokens/verify | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), d.get("result",{}).get("status"), [e.get("message") for e in d.get("errors",[])])')
+            a=$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/accounts | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), [(x["id"],x["name"]) for x in d.get("result",[])], [e.get("message") for e in d.get("errors",[])])')
+            r=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/accounts | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "x")')/r2/buckets" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("r2:", d.get("success"), [e.get("message") for e in d.get("errors",[])])')
+            echo "::notice title=cand$i::verify=$v | accounts=$a | $r"
           done
