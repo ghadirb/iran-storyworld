@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "cloudflare/**"
+      - "tools/kv_store.py"
       - ".github/workflows/deploy-backend.yml"
 
 permissions:
@@ -16,16 +17,15 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CF_ACCOUNTS: ${{ secrets.CF_ACCOUNTS }}
+      PRIMARY_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Create R2 bucket (if missing)
-        run: |
-          set +e
-          out=$(npx --yes wrangler@4 r2 bucket create riwayat-media 2>&1); rc=$?
-          echo "::notice title=r2-bucket rc=$rc::$(echo "$out" | tail -n 8 | tr '\n' ' ' | cut -c1-900)"
+      - name: Prepare KV namespaces on all accounts
+        run: python3 tools/kv_store.py prepare --out "$RUNNER_TEMP/accounts.json"
       - name: Deploy worker
         working-directory: cloudflare/worker
         run: |
@@ -39,5 +39,6 @@ jobs:
           SIGN_SECRET: ${{ secrets.SIGN_SECRET }}
           APP_KEY: ${{ secrets.APP_KEY }}
         run: |
+          npx --yes wrangler@4 secret put ACCOUNTS < "$RUNNER_TEMP/accounts.json"
           printf '%s' "$SIGN_SECRET" | npx --yes wrangler@4 secret put SIGN_SECRET
           printf '%s' "$APP_KEY" | npx --yes wrangler@4 secret put APP_KEY

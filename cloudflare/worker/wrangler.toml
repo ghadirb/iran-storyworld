@@ -3,8 +3,5 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 workers_dev = true
 
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "riwayat-media"
-
-# Secrets (set via GitHub Actions / `wrangler secret put`): SIGN_SECRET, APP_KEY
+# بدون R2 (نیاز به کارت دارد). فایل‌ها در KV چند حساب‌اند؛ ببین docs/07_storage_kv.md
+# Secrets (با GitHub Actions: deploy-backend.yml): ACCOUNTS, SIGN_SECRET, APP_KEY

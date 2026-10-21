@@ -68,8 +68,9 @@ game-hooks/                ← داده‌های اختیاری برای فعا�
 - مالک اعلام کرده پس از تکمیل کار توکن را غیرفعال می‌کند. بعد از آن، commit با دسترسی خودش انجام می‌شود.
 
 ## ۱۰. انتشار آنلاین قسمت‌ها (بدون بیلد مجدد برنامه)
-- ویدیوها داخل APK نیستند. برنامه `catalog.json` را از Worker کلودفلر می‌گیرد، پوستر را کش می‌کند و برای پخش لینک امضاشدهٔ ۱۰ دقیقه‌ای می‌گیرد (`cloudflare/worker/src/index.js`). فایل‌ها در R2 (باکت `riwayat-media`).
-- **افزودن قسمت جدید:** (۱) ساخت `episodes/chNN/epNN/` و اسکریپت ساخت در `tools/`؛ (۲) یک خط در `tools/build_map.txt`؛ (۳) یک ردیف در `catalog/catalog.json`؛ (۴) push. ورکفلوی `publish-episodes.yml` ویدیو و پوستر را می‌سازد، در R2 می‌گذارد و کاتالوگ را آخر منتشر می‌کند.
-- استقرار Worker: `deploy-backend.yml`. اسرار لازم در GitHub Secrets: `CLOUDFLARE_API_TOKEN` (دسترسی Workers Scripts:Edit و R2:Edit)، `CLOUDFLARE_ACCOUNT_ID`، `SIGN_SECRET`، `APP_KEY`؛ متغیر مخزن: `API_BASE`.
+- ویدیوها داخل APK نیستند. برنامه `catalog.json` را از Worker کلودفلر می‌گیرد، پوستر را کش می‌کند و برای پخش لینک امضاشدهٔ ۱۰ دقیقه‌ای می‌گیرد (`cloudflare/worker/src/index.js`).
+- **ذخیره‌سازی: KV چندحسابی، نه R2** (R2 بدون کارت فعال نمی‌شود). جزئیات، سهمیه‌ها و افزودن/حذف حساب: `docs/07_storage_kv.md`.
+- **افزودن قسمت جدید:** (۱) ساخت `episodes/chNN/epNN/` و اسکریپت ساخت در `tools/`؛ (۲) یک خط در `tools/build_map.txt`؛ (۳) یک ردیف در `catalog/catalog.json`؛ (۴) push. ورکفلوی `publish-episodes.yml` ویدیو و پوستر را می‌سازد، روی KV (با سرریز خودکار به حساب بعدی) می‌گذارد و کاتالوگ را آخر منتشر می‌کند.
+- استقرار Worker: `deploy-backend.yml`. اسرار لازم در GitHub Secrets: `CF_ACCOUNTS` (آرایهٔ JSON توکن‌ها)، `CLOUDFLARE_API_TOKEN` (Workers Scripts:Edit برای استقرار)، `CLOUDFLARE_ACCOUNT_ID` (حساب اصلی Worker)، `SIGN_SECRET`، `APP_KEY`؛ متغیر مخزن: `API_BASE`.
 - محافظت: بدون دکمهٔ دانلود، لینک کوتاه‌مدت، `FLAG_SECURE`. کپی‌ناپذیریِ کامل ممکن نیست؛ فقط سخت‌تر می‌شود. `APP_KEY` داخل APK است و با استخراج قابل‌کشف است (در صورت سوءاستفاده می‌چرخانیم).
 - توکن‌ها هرگز در مخزن نمی‌مانند.
