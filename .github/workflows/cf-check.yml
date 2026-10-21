@@ -12,11 +12,13 @@ jobs:
           T2: ${{ secrets.CF_CAND_4 }}
           T3: ${{ secrets.CF_CAND_DASH }}
         run: |
+          A=1609c905e10f5c9a6cf1a0cb240f356f
           i=0
           for t in "$T1" "$T2" "$T3"; do
             i=$((i+1))
-            v=$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/user/tokens/verify | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), d.get("result",{}).get("status"), [e.get("message") for e in d.get("errors",[])])')
-            a=$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/accounts | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d.get("success"), [(x["id"],x["name"]) for x in d.get("result",[])], [e.get("message") for e in d.get("errors",[])])')
-            r=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$(curl -s -H "Authorization: Bearer $t" https://api.cloudflare.com/client/v4/accounts | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "x")')/r2/buckets" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("r2:", d.get("success"), [e.get("message") for e in d.get("errors",[])])')
-            echo "::notice title=cand$i::verify=$v | accounts=$a | $r"
+            w=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$A/workers/scripts" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("workers:", d.get("success"), [e.get("message") for e in d.get("errors",[])])')
+            k=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$A/storage/kv/namespaces" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("kv:", d.get("success"))')
+            r=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$A/r2/buckets" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("r2:", d.get("success"), [(e.get("code"),e.get("message")) for e in d.get("errors",[])])')
+            s=$(curl -s -H "Authorization: Bearer $t" "https://api.cloudflare.com/client/v4/accounts/$A/workers/subdomain" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("subdomain:", d.get("result"))')
+            echo "::notice title=cand$i::$w | $k | $r | $s"
           done
