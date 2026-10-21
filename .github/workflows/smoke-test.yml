@@ -1,0 +1,39 @@
+name: Smoke test (live API)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE: ${{ vars.API_BASE }}
+      APP_KEY: ${{ secrets.APP_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test catalog, poster, signed video (with Range)
+        shell: bash
+        run: |
+          set -uo pipefail
+          fail=0
+          code=$(curl -s -o /tmp/cat.json -w '%{http_code}' "$API_BASE/catalog.json"); echo "catalog: $code"
+          [ "$code" = 200 ] || fail=1
+          ids=$(python3 -c "import json;print(' '.join(e['id'] for c in json.load(open('/tmp/cat.json'))['chapters'] for e in c['episodes']))" 2>/dev/null || echo "")
+          echo "episodes in online catalog: $ids"
+          for id in $ids; do
+            p=$(curl -s -o /dev/null -w '%{http_code}' "$API_BASE/poster/$id.jpg")
+            r=$(curl -s -H "x-app-key: $APP_KEY" "$API_BASE/play/$id")
+            url=$(echo "$r" | python3 -c "import sys,json;print(json.load(sys.stdin).get('url',''))" 2>/dev/null || echo "")
+            if [ -z "$url" ]; then echo "::error title=play $id::no signed url ($r)"; fail=1; continue; fi
+            v=$(curl -s -o /dev/null -w '%{http_code} %{size_download}' -H 'Range: bytes=0-1023' "$url")
+            f=$(curl -s -o /dev/null -w '%{http_code}' "$API_BASE/play/$id")
+            echo "$id poster=$p video_range='$v' play_without_key=$f"
+            case "$v" in "206 1024") ;; *) fail=1;; esac
+            [ "$p" = 200 ] || fail=1
+            [ "$f" = 403 ] || fail=1
+          done
+          echo "::notice title=smoke::$([ $fail = 0 ] && echo PASS || echo FAIL)"
+          exit $fail

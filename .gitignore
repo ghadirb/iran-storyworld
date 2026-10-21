@@ -22,3 +22,7 @@ android/app/src/main/assets/posters/*.jpg
 *.jks
 *.keystore
 android/build-*.log
+
+# پایتون
+__pycache__/
+*.pyc
