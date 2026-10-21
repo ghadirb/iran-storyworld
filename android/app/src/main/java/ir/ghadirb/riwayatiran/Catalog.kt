@@ -23,8 +23,25 @@ data class Chapter(
 )
 
 object Catalog {
+    /** ابتدا آخرین نسخهٔ دریافت‌شده؛ در نبود آن، کاتالوگ سبک داخل برنامه. */
     fun load(ctx: Context): List<Chapter> {
-        val text = ctx.assets.open("catalog.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val cached = java.io.File(ctx.filesDir, "catalog.json")
+        val text = if (cached.exists()) cached.readText(Charsets.UTF_8)
+        else ctx.assets.open("catalog.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        return try { parse(text) } catch (e: Exception) {
+            parse(ctx.assets.open("catalog.json").bufferedReader(Charsets.UTF_8).use { it.readText() })
+        }
+    }
+
+    /** کاتالوگ را آنلاین می‌گیرد، اگر معتبر بود ذخیره می‌کند و فهرست تازه را برمی‌گرداند. */
+    suspend fun refresh(ctx: Context): List<Chapter>? {
+        val text = Net.fetchCatalogText() ?: return null
+        val parsed = try { parse(text) } catch (e: Exception) { return null }
+        java.io.File(ctx.filesDir, "catalog.json").writeText(text, Charsets.UTF_8)
+        return parsed
+    }
+
+    fun parse(text: String): List<Chapter> {
         val chapters = JSONObject(text).getJSONArray("chapters")
         return (0 until chapters.length()).map { i ->
             val c = chapters.getJSONObject(i)

@@ -13,6 +13,8 @@ android {
         targetSdk = 34
         versionCode = (System.getenv("APP_VERSION_CODE") ?: "1").toInt()
         versionName = System.getenv("APP_VERSION_NAME") ?: "0.1.0"
+        buildConfigField("String", "API_BASE", "\"${System.getenv("API_BASE") ?: "https://riwayat-api.example.workers.dev"}\"")
+        buildConfigField("String", "APP_KEY", "\"${System.getenv("APP_KEY") ?: ""}\"")
     }
 
     // امضای نسخهٔ نهایی فقط وقتی فعال می‌شود که کلید از طریق متغیرهای محیطی (GitHub Secrets) داده شده باشد.
@@ -41,10 +43,10 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 
-    androidResources { noCompress += listOf("mp4", "json", "jpg") }
+    androidResources { noCompress += listOf("json") }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 

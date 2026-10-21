@@ -1,0 +1,10 @@
+name = "riwayat-api"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "riwayat-media"
+
+# Secrets (set via GitHub Actions / `wrangler secret put`): SIGN_SECRET, APP_KEY

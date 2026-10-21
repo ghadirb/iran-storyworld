@@ -1,0 +1,36 @@
+name: Deploy Cloudflare backend
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "cloudflare/**"
+      - ".github/workflows/deploy-backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Create R2 bucket (if missing)
+        run: npx --yes wrangler@4 r2 bucket create riwayat-media || echo "bucket exists or create skipped"
+      - name: Deploy worker
+        working-directory: cloudflare/worker
+        run: npx --yes wrangler@4 deploy
+      - name: Set worker secrets
+        working-directory: cloudflare/worker
+        env:
+          SIGN_SECRET: ${{ secrets.SIGN_SECRET }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+        run: |
+          printf '%s' "$SIGN_SECRET" | npx --yes wrangler@4 secret put SIGN_SECRET
+          printf '%s' "$APP_KEY" | npx --yes wrangler@4 secret put APP_KEY

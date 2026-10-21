@@ -53,7 +53,8 @@ private val Lapis = Color(0xFF1F3F7A)
 @Composable
 fun AppRoot() {
     val ctx = LocalContext.current
-    val chapters = remember { Catalog.load(ctx) }
+    var chapters by remember { mutableStateOf(Catalog.load(ctx)) }
+    LaunchedEffect(Unit) { Catalog.refresh(ctx)?.let { chapters = it } }
     val progress = remember { Progress(ctx) }
     var watched by remember { mutableStateOf(progress.watched()) }
     // "home" | "chapter:<id>" | "play:<chapterId>:<episodeId>"
@@ -167,7 +168,7 @@ private fun EpisodesScreen(ch: Chapter, watched: Set<String>, onBack: () -> Unit
                         .background(Color.White).clickable { onPick(ep) }.padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Poster(ep.poster, Modifier.width(150.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)))
+                    Poster(ep.id, Modifier.width(150.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("قسمت ${ep.number}", color = Lapis, fontSize = 13.sp)
@@ -182,12 +183,13 @@ private fun EpisodesScreen(ch: Chapter, watched: Set<String>, onBack: () -> Unit
 }
 
 @Composable
-private fun Poster(path: String, modifier: Modifier) {
+private fun Poster(episodeId: String, modifier: Modifier) {
     val ctx = LocalContext.current
-    val bmp = remember(path) {
-        try { ctx.assets.open(path).use { BitmapFactory.decodeStream(it) }?.asImageBitmap() } catch (e: Exception) { null }
+    val bmp by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, episodeId) {
+        value = Net.poster(ctx, episodeId)?.asImageBitmap()
     }
-    if (bmp != null) Image(bmp, null, modifier, contentScale = ContentScale.Crop)
+    val b = bmp
+    if (b != null) Image(b, null, modifier, contentScale = ContentScale.Crop)
     else Box(modifier.background(Brown))
 }
 
@@ -210,10 +212,18 @@ private fun PlayerScreen(
         onDispose { setBrightness(activity, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE) }
     }
     val player = remember(ep.id) {
-        ExoPlayer.Builder(ctx).build().apply {
-            setMediaItem(MediaItem.fromUri("asset:///" + ep.video))
-            prepare()
-            playWhenReady = true
+        ExoPlayer.Builder(ctx).build()
+    }
+    // لینک پخش امضاشدهٔ کوتاه‌مدت از Worker؛ ویدیو داخل برنامه ذخیره نیست.
+    var loadFailed by remember(ep.id) { mutableStateOf(false) }
+    var retry by remember(ep.id) { mutableStateOf(0) }
+    LaunchedEffect(ep.id, retry) {
+        loadFailed = false
+        val url = Net.playUrl(ep.id)
+        if (url == null) { loadFailed = true } else {
+            player.setMediaItem(MediaItem.fromUri(url))
+            player.prepare()
+            player.playWhenReady = true
         }
     }
     DisposableEffect(player) {
@@ -245,6 +255,12 @@ private fun PlayerScreen(
                 update = { it.player = player },
                 modifier = Modifier.fillMaxSize(),
             )
+            if (loadFailed) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("برای دیدن قسمت به اینترنت نیاز است.", color = Sand, fontSize = 15.sp)
+                    TextButton(onClick = { retry++ }) { Text("تلاش دوباره", color = Gold, fontSize = 16.sp) }
+                }
+            }
             // لایهٔ حرکات: نوار کنترل پایین آزاد می‌ماند
             Box(
                 Modifier.fillMaxSize().padding(bottom = 64.dp)
