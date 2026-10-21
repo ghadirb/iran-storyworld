@@ -31,6 +31,7 @@ jobs:
         run: |
           python3 tools/build_ep01_draft_v4.py
           python3 tools/build_ep02_draft_v2.py
+          python3 tools/build_ep03_draft_music.py
           ls -la out
 
       - name: Prepare app assets (compressed videos + posters)
@@ -40,7 +41,8 @@ jobs:
           enc() { ffmpeg -y -i "$1" -c:v libx264 -crf 26 -preset medium -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart "$2"; }
           enc out/ep01_draft_v4.mp4 $A/videos/ep01.mp4
           enc out/ep02_preview_v2.mp4 $A/videos/ep02.mp4
-          for e in ep01 ep02; do
+          enc out/ep03_draft_music.mp4 $A/videos/ep03.mp4
+          for e in ep01 ep02 ep03; do
             ffmpeg -y -ss 6 -i $A/videos/$e.mp4 -frames:v 1 -vf scale=640:-2 -q:v 4 $A/posters/$e.jpg
           done
           ls -la $A/videos $A/posters
