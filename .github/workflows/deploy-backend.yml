@@ -22,10 +22,17 @@ jobs:
         with:
           node-version: "20"
       - name: Create R2 bucket (if missing)
-        run: npx --yes wrangler@4 r2 bucket create riwayat-media || echo "bucket exists or create skipped"
+        run: |
+          set +e
+          out=$(npx --yes wrangler@4 r2 bucket create riwayat-media 2>&1); rc=$?
+          echo "::notice title=r2-bucket rc=$rc::$(echo "$out" | tail -n 8 | tr '\n' ' ' | cut -c1-900)"
       - name: Deploy worker
         working-directory: cloudflare/worker
-        run: npx --yes wrangler@4 deploy
+        run: |
+          set +e
+          out=$(npx --yes wrangler@4 deploy 2>&1); rc=$?
+          echo "$out"
+          if [ $rc -ne 0 ]; then echo "::error title=wrangler deploy failed::$(echo "$out" | tail -n 15 | tr '\n' ' ' | cut -c1-1500)"; exit $rc; fi
       - name: Set worker secrets
         working-directory: cloudflare/worker
         env:
