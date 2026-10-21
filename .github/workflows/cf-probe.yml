@@ -1,0 +1,16 @@
+name: Cloudflare accounts probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      CF_ACCOUNTS: ${{ secrets.CF_ACCOUNTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/cf_probe.py
