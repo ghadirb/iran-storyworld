@@ -9,6 +9,7 @@
   CF_ACCOUNTS          آرایهٔ JSON از {"name": "...", "token": "cfut_..."} (به‌صورت GitHub Secret)
   PRIMARY_ACCOUNT_ID   شناسهٔ حسابی که Worker در آن مستقر است (اختیاری؛ آن حساب اول می‌شود)
   KV_ACCOUNT_BUDGET_MB سقف استفاده از هر حساب (پیش‌فرض ۹۰۰ از ۱۰۲۴)
+  KV_PRIMARY_STORES_MEDIA=1  فقط اگر بخواهی حساب اصلی هم رسانه نگه دارد (پیش‌فرض: خیر؛ فقط registry)
 
 دستورها:
   prepare --out FILE   کشف حساب‌ها، ساخت namespace، نوشتن JSON نرمال‌شده برای Worker
@@ -154,17 +155,19 @@ def candidates(reg, accounts, key, size):
     return order
 
 
-def put_object(accounts, reg, key, data, ct, exhausted):
+def put_object(accounts, reg, key, data, ct, exhausted, storage=None):
+    """accounts = همهٔ حساب‌ها (برای حذف از حساب قبلی)؛ storage = حساب‌هایی که اجازهٔ نگه‌داری فایل دارند."""
+    storage = storage if storage is not None else accounts
     size = len(data)
     if size > MAX_VALUE:
         raise SystemExit(f"{key}: حجم {size/1048576:.1f}MiB بیش از سقف KV است؛ crf را بیشتر کن یا ویدیو را کوتاه‌تر کن")
     sha = hashlib.sha256(data).hexdigest()
     cur = reg["objects"].get(key)
-    if cur and cur["sha"] == sha and any(a["id"] == cur["acct"] for a in accounts):
+    if cur and cur["sha"] == sha and any(a["id"] == cur["acct"] for a in storage):
         print(f"= {key} بدون تغییر ({cur['acct'][:6]})")
         return
     last = None
-    for acc in candidates(reg, accounts, key, size):
+    for acc in candidates(reg, storage, key, size):
         if acc["id"] in exhausted:
             continue
         try:
@@ -185,6 +188,13 @@ def put_object(accounts, reg, key, data, ct, exhausted):
     raise SystemExit(f"{key}: هیچ حسابی ظرفیت یا سهمیهٔ نوشتن ندارد (آخرین خطا: {last}). یک توکن حساب جدید به CF_ACCOUNTS اضافه کن.")
 
 
+def storage_accounts(accounts):
+    """حساب اصلی (Worker و برنامه‌های اشتراک) فایل رسانه نگه نمی‌دارد، مگر KV_PRIMARY_STORES_MEDIA=1 یا حساب دیگری نباشد."""
+    if os.environ.get("KV_PRIMARY_STORES_MEDIA") == "1" or len(accounts) < 2:
+        return accounts
+    return accounts[1:]
+
+
 def cmd_prepare(out):
     accounts = discover()
     with open(out, "w") as f:
@@ -195,6 +205,7 @@ def cmd_prepare(out):
 
 def cmd_sync(manifest):
     accounts = discover()
+    storage = storage_accounts(accounts)
     reg = load_registry(accounts[0])
     exhausted = set()
     try:
@@ -204,7 +215,7 @@ def cmd_sync(manifest):
                 continue
             key, path, ct = line.split(" ", 2)
             with open(path, "rb") as f:
-                put_object(accounts, reg, key, f.read(), ct, exhausted)
+                put_object(accounts, reg, key, f.read(), ct, exhausted, storage)
     finally:
         kv_put(accounts[0], REGISTRY_KEY, json.dumps(reg).encode(), {"ct": "application/json"})
     cmd_status(accounts, reg)
@@ -213,7 +224,8 @@ def cmd_sync(manifest):
 def cmd_status(accounts=None, reg=None):
     accounts = accounts or discover()
     reg = reg or load_registry(accounts[0])
-    rows = [f"{a['name']}({a['id'][:6]}): {usage(reg, a['id'])/1048576:.1f}/{BUDGET/1048576:.0f}MiB" for a in accounts]
+    st = {a["id"] for a in storage_accounts(accounts)}
+    rows = [f"{a['name']}({a['id'][:6]}){'' if a['id'] in st else '[اصلی-بدون رسانه]'}: {usage(reg, a['id'])/1048576:.1f}/{BUDGET/1048576:.0f}MiB" for a in accounts]
     print("::notice title=kv-usage::" + " | ".join(rows) + f" | فایل‌ها: {len(reg['objects'])}")
 
 
