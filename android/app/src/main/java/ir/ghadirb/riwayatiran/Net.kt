@@ -34,6 +34,14 @@ object Net {
         } catch (e: Exception) { null }
     }
 
+    /** نسخهٔ مسدودکننده؛ فقط روی thread بارگذاری پخش‌کننده (ResolvingDataSource) صدا زده می‌شود. */
+    @Throws(java.io.IOException::class)
+    fun playUrlBlocking(episodeId: String): String {
+        val c = open("/play/$episodeId", withKey = true)
+        if (c.responseCode != 200) throw java.io.IOException("play url ${c.responseCode}")
+        return JSONObject(c.inputStream.bufferedReader().use { it.readText() }).getString("url")
+    }
+
     suspend fun poster(ctx: Context, episodeId: String): Bitmap? = withContext(Dispatchers.IO) {
         val f = File(File(ctx.cacheDir, "posters").apply { mkdirs() }, "$episodeId.jpg")
         try {

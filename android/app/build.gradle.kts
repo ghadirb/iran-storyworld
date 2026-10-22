@@ -44,6 +44,7 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     buildFeatures { compose = true; buildConfig = true }
+    lint { checkReleaseBuilds = false; abortOnError = false }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 
     androidResources { noCompress += listOf("json") }

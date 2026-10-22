@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.media.AudioManager
 import android.provider.Settings
 import android.view.WindowManager
@@ -40,7 +41,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -78,14 +86,11 @@ fun AppRoot() {
                         val ch = chapters.firstOrNull { it.id == parts[1] }
                         val idx = ch?.episodes?.indexOfFirst { it.id == parts[2] } ?: -1
                         if (ch == null || idx < 0) screen = "home" else {
-                            val ep = ch.episodes[idx]
-                            val next = ch.episodes.getOrNull(idx + 1)
                             BackHandler { screen = "chapter:${ch.id}" }
                             PlayerScreen(
-                                ep, next,
+                                ch, idx, progress,
                                 onBack = { screen = "chapter:${ch.id}" },
                                 onWatched = { progress.markWatched(it); watched = progress.watched() },
-                                onNext = { screen = "play:${ch.id}:${it.id}" },
                             )
                         }
                     }
@@ -143,7 +148,7 @@ private fun HomeScreen(
                     Text(ch.subtitle, color = Gold, fontSize = 15.sp)
                     if (ch.available) {
                         val done = ch.episodes.count { it.id in watched }
-                        Text("$done از ${ch.episodes.size} قسمت دیده شد", color = Sand, fontSize = 13.sp)
+                        Text("$done از ${ch.episodes.size} بخش دیده شد", color = Sand, fontSize = 13.sp)
                     }
                 }
             }
@@ -153,6 +158,13 @@ private fun HomeScreen(
 
 @Composable
 private fun EpisodesScreen(ch: Chapter, watched: Set<String>, onBack: () -> Unit, onPick: (Episode) -> Unit) {
+    val allDone = ch.episodes.isNotEmpty() && ch.episodes.all { it.id in watched }
+    val startEp = if (allDone) ch.episodes.firstOrNull() else ch.episodes.firstOrNull { it.id !in watched }
+    val label = when {
+        allDone -> "↻  دیدن دوبارهٔ داستان"
+        ch.episodes.any { it.id in watched } -> "▶  ادامهٔ داستان"
+        else -> "▶  شروع داستان"
+    }
     Column(Modifier.fillMaxSize().background(Sand).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("‹ بازگشت", color = Brown, fontSize = 16.sp) }
@@ -161,6 +173,19 @@ private fun EpisodesScreen(ch: Chapter, watched: Set<String>, onBack: () -> Unit
         Text(ch.title, color = Brown, fontSize = 30.sp, fontWeight = FontWeight.Bold)
         Text(ch.subtitle, color = Lapis, fontSize = 15.sp)
         Spacer(Modifier.height(12.dp))
+        if (startEp != null) {
+            Button(
+                onClick = { onPick(startEp) },
+                colors = ButtonDefaults.buttonColors(containerColor = Lapis, contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                shape = RoundedCornerShape(30.dp),
+            ) { Text(label, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+            Text(
+                "${ch.episodes.size} بخش پشت‌سرهم، بدون وقفه",
+                color = Color(0xFF6B5B45), fontSize = 13.sp,
+                modifier = Modifier.padding(top = 6.dp, bottom = 8.dp).align(Alignment.CenterHorizontally),
+            )
+        }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(ch.episodes) { ep ->
                 Row(
@@ -171,7 +196,7 @@ private fun EpisodesScreen(ch: Chapter, watched: Set<String>, onBack: () -> Unit
                     Poster(ep.id, Modifier.width(150.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("قسمت ${ep.number}", color = Lapis, fontSize = 13.sp)
+                        Text("بخش ${ep.number}", color = Lapis, fontSize = 13.sp)
                         Text(ep.title, color = Brown, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         Text(ep.summary, color = Color(0xFF6B5B45), fontSize = 13.sp)
                         if (ep.id in watched) Text("✓ دیده شد", color = Color(0xFF2E7D32), fontSize = 13.sp)
@@ -193,16 +218,21 @@ private fun Poster(episodeId: String, modifier: Modifier) {
     else Box(modifier.background(Brown))
 }
 
+/** همهٔ بخش‌های یک فصل پشت‌سرهم پخش می‌شوند؛ لینک امضاشدهٔ هر بخش درست لحظهٔ بازشدن گرفته می‌شود. */
+@OptIn(UnstableApi::class)
 @Composable
 private fun PlayerScreen(
-    ep: Episode,
-    next: Episode?,
+    ch: Chapter,
+    startIndex: Int,
+    progress: Progress,
     onBack: () -> Unit,
     onWatched: (String) -> Unit,
-    onNext: (Episode) -> Unit,
 ) {
     val ctx = LocalContext.current
-    var ended by remember(ep.id) { mutableStateOf(false) }
+    val parts = remember(ch.id) { ch.episodes }
+    var cur by remember(ch.id) { mutableStateOf(startIndex.coerceIn(0, parts.lastIndex)) }
+    val ep = parts[cur.coerceIn(0, parts.lastIndex)]
+    var ended by remember(ch.id) { mutableStateOf(false) }
     var showParents by remember { mutableStateOf(false) }
     var hud by remember { mutableStateOf<String?>(null) }
     val pvRef = remember { arrayOfNulls<PlayerView>(1) }
@@ -211,34 +241,56 @@ private fun PlayerScreen(
     DisposableEffect(Unit) {
         onDispose { setBrightness(activity, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE) }
     }
-    val player = remember(ep.id) {
-        ExoPlayer.Builder(ctx).build()
+    val player = remember(ch.id) {
+        val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(15_000).setReadTimeoutMs(20_000)
+        val resolving = ResolvingDataSource.Factory(http, ResolvingDataSource.Resolver { spec ->
+            val id = spec.uri.host ?: spec.uri.toString()
+            spec.withUri(Uri.parse(Net.playUrlBlocking(id)))
+        })
+        ExoPlayer.Builder(ctx).setMediaSourceFactory(DefaultMediaSourceFactory(resolving)).build()
     }
-    // لینک پخش امضاشدهٔ کوتاه‌مدت از Worker؛ ویدیو داخل برنامه ذخیره نیست.
-    var loadFailed by remember(ep.id) { mutableStateOf(false) }
-    var retry by remember(ep.id) { mutableStateOf(0) }
-    LaunchedEffect(ep.id, retry) {
-        loadFailed = false
-        val url = Net.playUrl(ep.id)
-        if (url == null) { loadFailed = true } else {
-            player.setMediaItem(MediaItem.fromUri(url))
-            player.prepare()
-            player.playWhenReady = true
-        }
+    var loadFailed by remember(ch.id) { mutableStateOf(false) }
+    LaunchedEffect(ch.id) {
+        player.setMediaItems(parts.map {
+            MediaItem.Builder().setUri("riwayat://${it.id}").setMediaId(it.id).setMimeType(MimeTypes.VIDEO_MP4).build()
+        })
+        val r = progress.resume(ch.id)
+        val start = startIndex.coerceIn(0, parts.lastIndex)
+        player.seekTo(start, if (r != null && r.first == start) r.second else 0L)
+        player.prepare()
+        player.playWhenReady = true
     }
     DisposableEffect(player) {
         val l = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_ENDED) { ended = true; onWatched(ep.id) }
-                if (state == Player.STATE_READY) ended = false
+            override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                val i = player.currentMediaItemIndex
+                if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) parts.getOrNull(i - 1)?.let { onWatched(it.id) }
+                cur = i
             }
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) {
+                    parts.lastOrNull()?.let { onWatched(it.id) }
+                    progress.clearResume(ch.id)
+                    ended = true
+                }
+                if (state == Player.STATE_READY) { ended = false; loadFailed = false }
+            }
+            override fun onPlayerError(error: PlaybackException) { loadFailed = true }
         }
         player.addListener(l)
-        onDispose { player.removeListener(l); player.release() }
+        onDispose {
+            if (!ended) progress.saveResume(ch.id, player.currentMediaItemIndex, player.currentPosition)
+            player.removeListener(l); player.release()
+        }
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, player) {
-        val o = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_STOP) player.pause() }
+        val o = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_STOP) {
+                player.pause()
+                if (!ended) progress.saveResume(ch.id, player.currentMediaItemIndex, player.currentPosition)
+            }
+        }
         lifecycle.addObserver(o)
         onDispose { lifecycle.removeObserver(o) }
     }
@@ -257,8 +309,8 @@ private fun PlayerScreen(
             )
             if (loadFailed) {
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("برای دیدن قسمت به اینترنت نیاز است.", color = Sand, fontSize = 15.sp)
-                    TextButton(onClick = { retry++ }) { Text("تلاش دوباره", color = Gold, fontSize = 16.sp) }
+                    Text("برای دیدن داستان به اینترنت نیاز است.", color = Sand, fontSize = 15.sp)
+                    TextButton(onClick = { loadFailed = false; player.prepare(); player.play() }) { Text("تلاش دوباره", color = Gold, fontSize = 16.sp) }
                 }
             }
             // لایهٔ حرکات: نوار کنترل پایین آزاد می‌ماند
@@ -329,18 +381,31 @@ private fun PlayerScreen(
             }
         }
         Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("قسمت ${ep.number}: ${ep.title}", color = Gold, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text("${ch.title} — بخش ${cur + 1} از ${parts.size}", color = Sand.copy(alpha = 0.8f), fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text(ep.title, color = Gold, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                parts.forEachIndexed { i, p ->
+                    val isCur = i == cur
+                    Box(
+                        Modifier.size(40.dp).clip(RoundedCornerShape(20.dp))
+                            .background(if (isCur) Gold else if (p.id in progress.watched()) Sand.copy(alpha = 0.55f) else Sand.copy(alpha = 0.2f))
+                            .clickable { ended = false; player.seekToDefaultPosition(i); player.play() },
+                        contentAlignment = Alignment.Center,
+                    ) { Text("${i + 1}", color = if (isCur) Brown else Sand, fontWeight = FontWeight.Bold) }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
             Text("کشیدن روی تصویر: راست = صدا، چپ = نور، چپ/راست = جلو و عقب", color = Sand.copy(alpha = 0.7f), fontSize = 12.sp, textAlign = TextAlign.Center)
             if (ended) {
                 Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { ended = false; player.seekTo(0); player.play() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Sand, contentColor = Brown)) { Text("↻ دوباره") }
-                    if (next != null) Button(onClick = { onNext(next) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Brown)) { Text("قسمت بعد ›") }
-                    else Button(onClick = onBack,
-                        colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Brown)) { Text("به‌زودی قسمت‌های بیشتر") }
+                    Button(onClick = { ended = false; player.seekToDefaultPosition(0); player.play() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Sand, contentColor = Brown)) { Text("↻ دوباره از اول") }
+                    Button(onClick = onBack,
+                        colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Brown)) { Text("بازگشت") }
                 }
+                Text("فصل‌های بعدی به‌زودی می‌آیند", color = Sand.copy(alpha = 0.7f), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
             }
         }
     }

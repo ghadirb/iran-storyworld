@@ -76,4 +76,16 @@ class Progress(ctx: Context) {
     fun markWatched(id: String) {
         sp.edit().putStringSet("watched", watched() + id).apply()
     }
+
+    /** جای توقف هر فصل: «شمارهٔ بخش:میلی‌ثانیه». */
+    fun saveResume(chapterId: String, index: Int, posMs: Long) {
+        sp.edit().putString("resume:$chapterId", "$index:$posMs").apply()
+    }
+    fun clearResume(chapterId: String) { sp.edit().remove("resume:$chapterId").apply() }
+    fun resume(chapterId: String): Pair<Int, Long>? {
+        val p = (sp.getString("resume:$chapterId", null) ?: return null).split(":")
+        if (p.size != 2) return null
+        val i = p[0].toIntOrNull() ?: return null
+        return i to (p[1].toLongOrNull() ?: 0L)
+    }
 }
