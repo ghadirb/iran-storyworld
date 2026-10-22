@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">روایت ایران</string>
+    <style name="Theme.Riwayat" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFF4E4C8</item>
+        <item name="android:statusBarColor">#FF3B2A1A</item>
+        <item name="android:navigationBarColor">#FF3B2A1A</item>
+    </style>
+</resources>

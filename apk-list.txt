@@ -1,0 +1,5 @@
+total 10972
+drwxr-xr-x 2 runner runner     4096 Oct 22 16:47 .
+drwxr-xr-x 3 runner runner     4096 Oct 22 16:47 ..
+-rw-r--r-- 1 runner runner 11222247 Oct 22 16:47 app-debug.apk
+-rw-r--r-- 1 runner runner      408 Oct 22 16:47 output-metadata.json
