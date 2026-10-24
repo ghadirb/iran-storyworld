@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """پیش‌نمایش موسیقی‌دار فصل ۲ بخش ۱ «کاروان رسید» (نسخهٔ بلندتر، تأییدنشده). خروجی: out/ch02_ep01_draft_music.mp4
-برای هر نما: اگر assets/video/<شمارهٔ تصویر>.mp4 باشد از همان کلیپ متحرک استفاده می‌شود، وگرنه تصویر ثابت با زوم بسیار ملایم.
+برای هر نما: اگر assets/video/<شمارهٔ تصویر>.mp4 باشد از همان کلیپ (در صورت کوتاه‌تر بودن، رفت‌وبرگشتی) استفاده می‌شود، وگرنه تصویر ثابت با زوم بسیار ملایم.
 صدا: فقط فایل‌های روایت/دیالوگ ۸۵ تا ۱۰۷ + موسیقی بی‌کلام (کم‌حجم، با کاهش خودکار زیر گفتار). افکت یا صدای تازه جعل نمی‌شود."""
 import glob, json, os, subprocess, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,18 +33,13 @@ for sid, (auds, num) in TIMELINE.items():
     d = dur(wav); n = int(d*FPS)+1; vid = os.path.join(TMP, f"{sid}_v.mp4")
     clip = os.path.join(V, f"{num}.mp4"); img = os.path.join(I, f"{num}.png")
     if os.path.isfile(clip):
-        cd = dur(clip); head = os.path.join(TMP, f"{sid}_head.mp4")
-        run("ffmpeg","-y","-i",clip,"-filter_complex",f"[0:v]{FIT(W,H)}[v]","-map","[v]","-an",*ENC,head)
-        if d > cd+0.05:  # بعد از پایان کلیپ: آخرین فریم با زوم بسیار ملایم
-            last = os.path.join(TMP, f"{sid}_last.png"); rest = d-cd; m = int(rest*FPS)+1
-            run("ffmpeg","-y","-sseof","-0.1","-i",clip,"-frames:v","1","-update","1",last)
-            tail = os.path.join(TMP, f"{sid}_tail.mp4")
-            run("ffmpeg","-y","-loop","1","-framerate",str(FPS),"-i",last,"-filter_complex",
-                f"[0:v]{FIT(2*W,2*H)},zoompan=z='1+0.05*on/{m}':d={m}:s={W}x{H}:fps={FPS}[v]","-map","[v]","-t",f"{rest:.2f}",*ENC,tail)
-            ll = os.path.join(TMP, f"{sid}_vl.txt"); open(ll,"w").write(f"file '{head}'\nfile '{tail}'\n")
-            run("ffmpeg","-y","-f","concat","-safe","0","-i",ll,"-c","copy",vid)
-        else: vid = head
-        kind = "کلیپ"
+        # کلیپ ۵ ثانیه‌ای کوتاه‌تر از نماست: پخش رفت‌وبرگشتی (جلو، عقب، جلو...) تا پایان نما، بدون ایستادن تصویر
+        pp = os.path.join(TMP, f"{sid}_pp.mp4")
+        run("ffmpeg","-y","-i",clip,"-filter_complex",
+            f"[0:v]{FIT(W,H)},split[a][b];[b]reverse[r];[a][r]concat=n=2:v=1:a=0[v]","-map","[v]","-an",*ENC,pp)
+        vid = os.path.join(TMP, f"{sid}_loop.mp4")
+        run("ffmpeg","-y","-stream_loop","-1","-i",pp,"-t",f"{d:.2f}","-an",*ENC,vid)
+        kind = "کلیپ (رفت‌وبرگشت)"
     else:
         run("ffmpeg","-y","-loop","1","-framerate",str(FPS),"-i",img,"-filter_complex",
             f"[0:v]{FIT(2*W,2*H)},zoompan=z='1+0.06*on/{n}':d={n}:s={W}x{H}:fps={FPS}[v]","-map","[v]","-t",f"{d:.2f}",*ENC,vid)
