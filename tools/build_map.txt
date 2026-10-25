@@ -8,3 +8,4 @@ ep05 build_ep05_draft_music.py out/ep05_draft_music.mp4
 c2ep01 build_ch02_ep01_draft_music.py out/ch02_ep01_draft_music.mp4
 c2ep02 build_ch02_ep02_draft_music.py out/ch02_ep02_draft_music.mp4
 c2ep03 build_ch02_ep03_draft_music.py out/ch02_ep03_draft_music.mp4
+c2ep04 build_ch02_ep04_draft_music.py out/ch02_ep04_draft_music.mp4
