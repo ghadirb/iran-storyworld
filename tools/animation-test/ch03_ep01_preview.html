@@ -51,7 +51,7 @@ const shots=[
  {src:'../../assets/images/نماد روی سنگ.1.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%86%D9%85%D8%A7%D8%AF%20%D8%B1%D9%88%DB%8C%20%D8%B3%D9%86%DA%AF.1.png',title:'نشان · نمای جزئیات',caption:'جزئیات نشان دیده می‌شود؛ شباهت هنوز به معنای یکی‌بودن نیست.',focus:[.5,.5],zoom:[1.01,1.24]},
  {src:'../../assets/images/هنو.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%87%D9%86%D9%88.png',title:'هنو · مکث و اندیشه',caption:'پیش از نتیجه‌گیری، مشاهده و حدس از هم جدا می‌مانند.',focus:[.48,.44],zoom:[1.12,1.04]}
 ];
-const imgs=shots.map(s=>{const im=new Image();im.onload=()=>draw(t);im.onerror=()=>{if(!im.dataset.remoteTried){im.dataset.remoteTried='1';im.src=s.remote;}else{draw(t);}};im.src=s.src;return im;});
+const imgs=shots.map(s=>{const im=new Image();im.onload=()=>draw(t);im.onerror=()=>{if(!im.dataset.remoteTried){im.dataset.remoteTried='1';im.crossOrigin='anonymous';im.src=s.remote;}else{draw(t);}};im.src=s.src;return im;});
 document.querySelectorAll('.ref img').forEach(im=>{im.onerror=()=>{if(!im.dataset.remoteTried){im.dataset.remoteTried='1';im.src=im.dataset.remote;}else{im.alt+=' (بارگذاری نشد)';}};im.src=im.dataset.local;});
 const duration=16;let t=0,playing=false,last=0,raf=0,recorder=null,chunks=[];
 const ease=x=>x*x*(3-2*x);
