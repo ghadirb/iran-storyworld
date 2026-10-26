@@ -111,14 +111,14 @@ function update(time){
  document.getElementById('seek').value=t;
  document.getElementById('time').textContent='00:'+String(Math.floor(t)).padStart(2,'0')+' / 00:12';
 }
-function tick(now){if(!playing)return;const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;if(t>=12){t=12;playing=false;document.getElementById('play').textContent='▶ پخش';}update(t);if(playing)raf=requestAnimationFrame(tick);}
+function tick(now){if(!playing)return;const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;if(t>=12){t=12;playing=false;document.getElementById('play').textContent='▶ پخش';if(recorder&&recorder.state==='recording')recorder.stop();document.getElementById('record').disabled=false;document.getElementById('stop').disabled=true;}update(t);if(playing)raf=requestAnimationFrame(tick);}
 document.getElementById('play').onclick=()=>{if(playing){playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';}else{if(t>=12)t=0;playing=true;last=performance.now();document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);}};
 document.getElementById('reset').onclick=()=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';update(0);};
 document.getElementById('seek').oninput=e=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';update(Number(e.target.value));};
 let recorder=null,chunks=[];
 document.getElementById('record').onclick=()=>{
  if(!canvas.captureStream||!window.MediaRecorder){alert('ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود.');return;}
- chunks=[];const stream=canvas.captureStream(24);
+ cancelAnimationFrame(raf);chunks=[];const stream=canvas.captureStream(24);
  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000});
  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
