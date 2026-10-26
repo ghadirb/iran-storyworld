@@ -3,131 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>آزمایش انیمیشن سه‌بعدی — روایت ایران</title>
+<title>آزمایش انیمیشن — روایت ایران</title>
 <style>
 :root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#30434d;--text:#edf1e9;--muted:#a8b7bc;--accent:#d7ad68}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,"Segoe UI",sans-serif}
 main{max-width:1100px;margin:auto;padding:18px}h1{font-size:1.35rem;margin:0 0 6px}p{color:var(--muted);line-height:1.8;margin:5px 0 15px}
-.stage{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#c9d2d0;position:relative}
-canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.stage{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#c9d2d0}canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
 .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:12px}
-button{border:1px solid #526773;background:#253944;color:var(--text);padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit}
-button.primary{background:#76572f;border-color:#a17b47}button:disabled{opacity:.45;cursor:not-allowed}
-input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}#time{font-variant-numeric:tabular-nums;min-width:70px;color:var(--accent)}
-.note{font-size:.88rem;border-right:3px solid var(--accent);padding:8px 12px;background:#17232b;border-radius:5px;margin-top:12px}
-#download{color:#f0c982;display:none;padding:8px}
+button{border:1px solid #526773;background:#253944;color:var(--text);padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit}button.primary{background:#76572f;border-color:#a17b47}button:disabled{opacity:.45;cursor:not-allowed}
+input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}#time{font-variant-numeric:tabular-nums;min-width:85px;color:var(--accent)}#download{color:#f0c982;display:none;padding:8px}
+.note{font-size:.88rem;line-height:1.9;border-right:3px solid var(--accent);padding:8px 12px;background:#17232b;border-radius:5px;margin-top:12px}
 </style>
 </head>
 <body>
 <main>
-<h1>آزمایش ساخت سه‌بعدی — فصل ۳، بخش ۱</h1>
-<p>نمونهٔ فنی سبک برای بررسی روش سه‌بعدی در مرورگر: کارگاه هِنو، تیرداد، سنگ آبی و تکه‌سنگ نشانه‌دار. این مدل، پیش‌نمایش حجمی است؛ نه طراحی نهایی شخصیت‌ها و نه بازسازی تاریخی مستند.</p>
-<div class="stage"><canvas id="view" width="960" height="540" aria-label="پیش‌نمایش سه‌بعدی کارگاه"></canvas></div>
+<h1>آزمایش انیمیشن — فصل ۳، بخش ۱</h1>
+<p>نسخهٔ جایگزین سبک برای آزمایش روی رایانه‌های ضعیف. این فایل مستقل است و برای اجرا به اینترنت، کتابخانهٔ خارجی یا نصب نرم‌افزار نیاز ندارد. تصویر به روش دوبعدیِ لایه‌دار ساخته شده؛ این نسخه جایگزین موقت برای آزمودن حرکت دوربین و ضبط ویدئو است، نه رندر سه‌بعدی نهایی.</p>
+<div class="stage"><canvas id="view" width="960" height="540" aria-label="پیش‌نمایش متحرک کارگاه هنو"></canvas></div>
 <div class="controls">
 <button id="play" class="primary">▶ پخش</button><button id="reset">از ابتدا</button>
 <input id="seek" type="range" min="0" max="12" step=".05" value="0" aria-label="زمان صحنه">
 <span id="time">00:00 / 00:12</span>
 <button id="record">● ضبط WebM</button><button id="stop" disabled>پایان ضبط</button><a id="download" download="iran-storyworld-ch03-test.webm">دریافت ویدئو</a>
 </div>
-<div class="note">آزمایش ۱۲ ثانیه‌ای: دوربین از نمای باز به میز نزدیک می‌شود، سنگ آبی زیر نور می‌چرخد و سپس روی تکه‌سنگ قدیمی مکث می‌کنیم. برای سبک ماندن، از هندسه‌های ساده، بدون سایه‌های سنگین و بدون مدل‌های حجیم استفاده شده است.</div>
+<div class="note">در این آزمون ۱۲ ثانیه‌ای، نما به‌آرامی به میز نزدیک می‌شود، سنگ آبی حرکت چرخشی ظریفی دارد و سپس نشانهٔ روی تکه‌سنگ جداگانه دیده می‌شود. برای خروجی MP4 می‌توان فایل WebM را بعداً با FFmpeg تبدیل کرد.</div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
 <script>
 (function(){
-const canvas=document.getElementById('view');
-if(!window.THREE){document.querySelector('.note').textContent='کتابخانهٔ سه‌بعدی بارگذاری نشد. اتصال اینترنت را بررسی کنید و صفحه را دوباره باز کنید.';return;}
-const THREE=window.THREE;
-const renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:false,preserveDrawingBuffer:true});
-renderer.setPixelRatio(1);renderer.setSize(960,540,false);renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.setClearColor(0xc6d3d1,1);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xc6d3d1);scene.fog=new THREE.Fog(0xc6d3d1,12,25);
-const camera=new THREE.PerspectiveCamera(37,960/540,.1,60);
-camera.position.set(0,4.8,10.8);
-scene.add(new THREE.HemisphereLight(0xf4e8d0,0x62594d,2.1));
-const sun=new THREE.DirectionalLight(0xffe0a5,2.0);sun.position.set(-4,8,5);scene.add(sun);
-const fill=new THREE.DirectionalLight(0xc8d8e2,.7);fill.position.set(5,4,-3);scene.add(fill);
-const mat=(color,rough=.9)=>new THREE.MeshStandardMaterial({color,roughness:rough});
-const stoneMat=new THREE.MeshStandardMaterial({color:0x243d4d,roughness:.7,metalness:.08});
-const goldMat=mat(0xc5a35e,.8);
-function mesh(geo,material,parent=scene){const m=new THREE.Mesh(geo,material);parent.add(m);return m;}
-function box(w,h,d,material,x,y,z,parent=scene){const m=mesh(new THREE.BoxGeometry(w,h,d),material,parent);m.position.set(x,y,z);return m;}
-const floor=box(22,.25,18,mat(0xb7a184),0,-.18,0);
-const back=box(18,7,.35,mat(0xc6b79c),0,3.25,-4.6);
-box(.5,5,.5,mat(0x9b886d),-5.7,2.4,-4.25);box(.5,5,.5,mat(0x9b886d),5.7,2.4,-4.25);
-box(4.8,.3,.35,mat(0xa38d70),0,5.1,-4.25);
-const door=box(2.3,3.5,.1,mat(0x514b43),-4.2,1.65,-4.36);
-box(2.6,.15,.35,mat(0x8e7a61),-4.2,3.4,-4.15);
-for(let i=0;i<3;i++)box(.8,.12,.8,mat(0x9b886d),4.5, .1+i*.12,-2.5-i*.12);
-const table=box(4.3,.25,1.7,mat(0x79563b),0,1.45,.2);
-for(const x of [-1.85,1.85])for(const z of [-.45,.8])box(.18,1.4,.18,mat(0x60432e),x,.7,z);
-const toolsMat=mat(0x6e6559);box(.9,.06,.1,toolsMat,-1.15,1.62,.1).rotation.z=-.18;
-const tool2=mesh(new THREE.CylinderGeometry(.045,.055,.8,7),mat(0x9b8a71));tool2.position.set(1.3,1.72,.15);tool2.rotation.z=.5;
-// blue stone, intentionally small and dark, not a fantasy crystal
-const blueStone=new THREE.Group();scene.add(blueStone);blueStone.position.set(-.2,1.73,.05);
-const rock=mesh(new THREE.DodecahedronGeometry(.34,0),stoneMat,blueStone);rock.scale.set(1.12,.72,.88);rock.rotation.set(.18,.3,.22);
-for(let i=0;i<9;i++){const fleck=mesh(new THREE.SphereGeometry(.018,5,4),goldMat,blueStone);const a=i*2.399;fleck.position.set(Math.cos(a)*(.18+(i%3)*.025),Math.sin(a*1.7)*.13,Math.sin(a)*.2);}
-// second stone fragment with a similar but not identical bow/circle motif
-const fragment=mesh(new THREE.DodecahedronGeometry(.46,0),mat(0x9c9587),scene);fragment.scale.set(1.15,.58,.72);fragment.position.set(1.2,1.72,.15);fragment.rotation.set(.2,.15,.08);
-const mark=new THREE.Group();scene.add(mark);mark.position.set(1.2,2.0,.48);
-const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(-.18,0,0),new THREE.Vector3(0,.16,0),new THREE.Vector3(.18,0,0));
-mark.add(new THREE.Mesh(new THREE.TubeGeometry(curve,12,.022,5,false),mat(0x403e39)));
-const ring=mesh(new THREE.TorusGeometry(.055,.018,5,12),mat(0x403e39),mark);ring.position.set(0,-.1,0);
-// pottery bowl
-const bowl=mesh(new THREE.CylinderGeometry(.35,.25,.22,12,1,true),mat(0x9b6848));bowl.position.set(-1.35,1.7,.62);
-const water=mesh(new THREE.CircleGeometry(.28,16),mat(0x708e91,.2));water.rotation.x=-Math.PI/2;water.position.set(-1.35,1.805,.62);
-// character builder: simple low-poly human silhouettes
-function person(x,z,skin,cloth,hair,scale=1){
- const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);g.scale.setScalar(scale);
- const robe=mesh(new THREE.CylinderGeometry(.31,.48,1.05,7),mat(cloth),g);robe.position.y=1.0;
- const head=mesh(new THREE.SphereGeometry(.27,9,7),mat(skin),g);head.position.y=1.78;
- const cap=mesh(new THREE.SphereGeometry(.275,8,5,0,Math.PI*2,0,Math.PI/2),mat(hair),g);cap.position.y=1.87;cap.scale.y=.65;
- const armL=mesh(new THREE.CylinderGeometry(.075,.095,.72,6),mat(skin),g);armL.position.set(-.37,1.15,.05);armL.rotation.z=-.62;
- const armR=mesh(new THREE.CylinderGeometry(.075,.095,.72,6),mat(skin),g);armR.position.set(.37,1.15,.05);armR.rotation.z=.62;
- const eyeMat=mat(0x302a26);for(const ex of [-.09,.09]){const eye=mesh(new THREE.SphereGeometry(.025,5,4),eyeMat,g);eye.position.set(ex,1.8,.238);}
- return {g,armL,armR,head};
+const canvas=document.getElementById('view'),ctx=canvas.getContext('2d');
+if(!ctx){document.querySelector('.note').textContent='مرورگر امکان ترسیم روی Canvas را فراهم نکرده است. لطفاً فایل را در نسخهٔ به‌روز Chrome یا Edge باز کنید.';return;}
+const W=960,H=540;
+let t=0,playing=false,last=0,raf=0,recorder=null,chunks=[];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const smooth=(a,b,x)=>{const q=clamp((x-a)/(b-a),0,1);return q*q*(3-2*q)};
+function poly(points,fill,stroke){ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+function ellipse(x,y,rx,ry,fill){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();}
+function line(points,color,width=2){ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();}
+function text(s,x,y,size,color,align='center'){ctx.font='bold '+size+'px Tahoma, sans-serif';ctx.fillStyle=color;ctx.textAlign=align;ctx.fillText(s,x,y);}
+function person(x,y,s,robe,skin,hair,armMove){
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ ellipse(0,2,34,9,'rgba(48,42,32,.18)');
+ poly([[-22,-78],[-29,-16],[-38,0],[38,0],[29,-16],[22,-78]],robe);
+ line([[-18,-68],[-31,-38],[-23,-22]],skin,9);
+ line([[18,-68],[31,-43+armMove], [24,-25+armMove]],skin,9);
+ ellipse(0,-96,20,22,skin);ellipse(0,-109,21,12,hair);
+ line([[-14,-101],[-9,-98]],'#382b22',2);line([[9,-98],[14,-101]],'#382b22',2);
+ ctx.restore();
 }
-const henu=person(-1.35,.9,0xb9825e,0x9c7047,0x382b22,1.03);
-const tirdad=person(2.1,1.15,0xc18b66,0xd8c7a0,0x4a3326,.88);
-const sash=box(.5,.1,.48,mat(0x344a5b),2.1,1.05,1.19);sash.rotation.z=-.16;
-// hairline-like headband on Tirdad
-const band=mesh(new THREE.TorusGeometry(.25,.025,4,12),mat(0x33485b));band.position.set(2.1,1.88,1.15);band.rotation.x=Math.PI/2;
-const dust=mat(0x6f6250);for(let i=0;i<3;i++){const peb=mesh(new THREE.DodecahedronGeometry(.13,0),dust);peb.position.set(-3.2+i*.35,.13,-.6);}
-const target=new THREE.Vector3(0,1.4,0);
-let t=0,playing=false,last=performance.now(),raf=0;
-function smooth(a,b,x){const q=Math.max(0,Math.min(1,(x-a)/(b-a)));return q*q*(3-2*q);}
-function update(time){
- t=Math.max(0,Math.min(12,time));
- const approach=smooth(0,4,t),turn=smooth(3,7,t),compare=smooth(7,10,t);
- camera.position.set(0.2+approach*.3,4.9-approach*.75,10.9-approach*2.7);
- camera.lookAt(target.x,target.y,target.z);
- blueStone.rotation.y=.2+turn*.8+Math.sin(t*1.4)*.04;
- rock.rotation.y=.3+turn*.75;
- henu.armR.rotation.z=.62-turn*.55;
- tirdad.g.rotation.y=-.12+compare*.2;
- water.scale.setScalar(1+Math.sin(t*2.4)*.012);
- fragment.position.y=1.72+Math.sin(t*1.4)*.015;
- sun.position.x=-4+Math.sin(t*.15)*.5;
- renderer.render(scene,camera);
+function draw(time){
+ t=clamp(time,0,12);const approach=smooth(0,4,t),turn=smooth(3,7,t),compare=smooth(7,10,t);
+ ctx.clearRect(0,0,W,H);
+ const sky=ctx.createLinearGradient(0,0,0,540);sky.addColorStop(0,'#d9e1df');sky.addColorStop(1,'#aab9b7');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // Workshop wall and sunlit opening
+ poly([[0,0],[960,0],[960,340],[0,340]],'#c8b89b');
+ poly([[45,30],[290,30],[290,335],[45,335]],'#b4a184');
+ poly([[67,55],[266,55],[266,332],[67,332]],'#77644e');
+ poly([[82,68],[250,68],[250,332],[82,332]],'#d7d0b9');
+ // beam and columns
+ poly([[0,0],[960,0],[960,36],[0,36]],'#8e7a61');
+ for(const x of [25,315,620,910])poly([[x,0],[x+22,0],[x+22,340],[x,340]],'#a08a6d');
+ // floor perspective
+ poly([[0,330],[960,330],[960,540],[0,540]],'#b4a184');
+ for(let i=0;i<7;i++)line([[0,345+i*31],[960,345+i*31]],'rgba(113,91,67,.18)',1);
+ for(let i=0;i<9;i++)line([[480,330],[i*120,540]],'rgba(113,91,67,.13)',1);
+ // shelf and pottery in background
+ poly([[675,185],[870,185],[870,200],[675,200]],'#8e765a');
+ for(let i=0;i<3;i++){ellipse(710+i*58,225,17,22,'#a76e4b');ellipse(710+i*58,207,10,5,'#684a37');}
+ // camera approach simulated by scaling foreground objects around table center
+ ctx.save();ctx.translate(480,300);ctx.scale(1+approach*.16,1+approach*.16);ctx.translate(-480,-300);
+ // table
+ poly([[240,292],[670,292],[748,353],[163,353]],'#9a704d');
+ poly([[163,353],[748,353],[748,374],[163,374]],'#6e4d35');
+ poly([[205,370],[229,370],[219,478],[196,478]],'#6e4d35');
+ poly([[675,370],[699,370],[711,478],[688,478]],'#6e4d35');
+ // tools and bowl
+ line([[275,315],[345,301]],'#66594b',7);line([[284,307],[348,294]],'#c3b294',2);
+ ellipse(324,328,32,9,'#995f40');poly([[292,325],[300,346],[346,346],[355,325]],'#a66c49');ellipse(324,325,30,7,'#73513a');ellipse(324,325,23,4,'#769398');
+ // stone
+ const sx=475,sy=317+Math.sin(t*1.5)*1.7;
+ ctx.save();ctx.translate(sx,sy);ctx.rotate(.08+Math.sin(t*1.1)*.06+turn*.24);
+ poly([[-31,-8],[-25,-28],[-5,-37],[20,-28],[32,-8],[22,13],[-8,19],[-27,10]],'#263f50','#182f3b');
+ poly([[-20,-9],[-15,-24],[-2,-30],[7,-21],[1,-4],[-13,7]],'#496b7b');
+ for(let i=0;i<7;i++){const a=i*2.4;ellipse(Math.cos(a)*16,Math.sin(a)*9,2,2,'#b8a16d');}
+ ctx.restore();
+ // old fragment and similar-but-not-identical mark
+ ctx.save();ctx.translate(590,320);ctx.rotate(-.04);
+ poly([[-40,-13],[-28,-32],[4,-37],[37,-20],[31,12],[3,22],[-32,12]],'#a49a89','#777166');
+ line([[-14,-4],[-8,-12],[0,-15],[9,-10],[14,-4]],'#45423b',3);
+ ellipse(1,4,4,4,'#45423b');
+ ctx.restore();
+ // people, gentle movement only
+ person(170,365,1.0,'#9d7149','#bd8966','#443127',Math.sin(t)*2);
+ person(790,373,.88,'#d3c19a','#c18b66','#4a3326',0);
+ ctx.restore();
+ // captions are subtle, not burned into final story content
+ if(t<4)text('کارگاه هِنو — صبح',480,48,20,'#514738');
+ else if(t<8)text('سنگ آبی و نور صبح',480,48,20,'#514738');
+ else text('نشانه‌ای شبیه؛ نه لزوماً همان',480,48,20,'#514738');
+ // thin frame and timeline indicator
+ ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=2;ctx.strokeRect(8,8,944,524);
  document.getElementById('seek').value=t;
  document.getElementById('time').textContent='00:'+String(Math.floor(t)).padStart(2,'0')+' / 00:12';
 }
-function tick(now){if(!playing)return;const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;if(t>=12){t=12;playing=false;document.getElementById('play').textContent='▶ پخش';if(recorder&&recorder.state==='recording')recorder.stop();document.getElementById('record').disabled=false;document.getElementById('stop').disabled=true;}update(t);if(playing)raf=requestAnimationFrame(tick);}
+function tick(now){if(!playing)return;const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;if(t>=12){t=12;playing=false;document.getElementById('play').textContent='▶ پخش';if(recorder&&recorder.state==='recording')recorder.stop();document.getElementById('record').disabled=false;document.getElementById('stop').disabled=true;}draw(t);if(playing)raf=requestAnimationFrame(tick);}
 document.getElementById('play').onclick=()=>{if(playing){playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';}else{if(t>=12)t=0;playing=true;last=performance.now();document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);}};
-document.getElementById('reset').onclick=()=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';update(0);};
-document.getElementById('seek').oninput=e=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';update(Number(e.target.value));};
-let recorder=null,chunks=[];
+document.getElementById('reset').onclick=()=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';draw(0);};
+document.getElementById('seek').oninput=e=>{playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';draw(Number(e.target.value));};
 document.getElementById('record').onclick=()=>{
- if(!canvas.captureStream||!window.MediaRecorder){alert('ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود.');return;}
+ if(!canvas.captureStream||!window.MediaRecorder){alert('ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ در Chrome یا Edge به‌روز امتحان کنید.');return;}
  cancelAnimationFrame(raf);chunks=[];const stream=canvas.captureStream(24);
  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
- recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000});
+ try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1800000});}catch(e){alert('ضبط در این مرورگر شروع نشد. لطفاً Chrome یا Edge به‌روز را امتحان کنید.');return;}
  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
- recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'});const url=URL.createObjectURL(blob);const a=document.getElementById('download');a.href=url;a.style.display='inline-block';a.textContent='دریافت ویدئوی آزمایشی';};
- recorder.start();document.getElementById('record').disabled=true;document.getElementById('stop').disabled=false;
- t=0;playing=true;last=performance.now();document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);
+ recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'});const url=URL.createObjectURL(blob);const a=document.getElementById('download');a.href=url;a.style.display='inline-block';a.textContent='دریافت ویدئوی آزمایشی';stream.getTracks().forEach(track=>track.stop());};
+ recorder.start();document.getElementById('record').disabled=true;document.getElementById('stop').disabled=false;t=0;playing=true;last=performance.now();document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);
 };
 document.getElementById('stop').onclick=()=>{if(recorder&&recorder.state!=='inactive')recorder.stop();playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';document.getElementById('record').disabled=false;document.getElementById('stop').disabled=true;};
-update(0);
+draw(0);
 })();
 </script>
 </body>
