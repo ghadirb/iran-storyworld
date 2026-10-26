@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پیش‌نمایش تصویری — سنگی که برگشت</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#182630;--line:#30434d;--text:#edf1e9;--muted:#a8b7bc;--accent:#82c8d0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#243640,#0c1217 72%);color:var(--text);font-family:Tahoma,"Segoe UI",sans-serif;padding:22px}
+main{max-width:1120px;margin:auto}.intro{display:flex;gap:16px;align-items:end;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:clamp(22px,3vw,34px);margin:0 0 8px}.sub{color:var(--muted);line-height:1.8;font-size:14px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:#0b1115;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px #0008}
+canvas{display:block;width:100%;height:100%}.tag{position:absolute;right:18px;top:16px;padding:7px 12px;border-radius:99px;background:#101820d9;border:1px solid #ffffff22;font-size:12px;color:#d9e7e6;pointer-events:none}
+.hint{position:absolute;left:18px;top:16px;color:#e5e9e7aa;font-size:11px;direction:ltr;pointer-events:none}
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:14px 0}
+button,a.download{border:1px solid #405761;background:#21333c;color:var(--text);padding:10px 15px;border-radius:9px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none}
+button:hover,a.download:hover{background:#2d4651}button:disabled{opacity:.4;cursor:not-allowed}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--accent)}.time{font:12px ui-monospace,monospace;color:var(--muted);direction:ltr;min-width:80px;text-align:center}
+.notice{background:#182630;border:1px solid #30434d;border-radius:12px;padding:12px 15px;color:var(--muted);font-size:13px;line-height:1.9;margin:4px 0 18px}
+.refs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ref{background:#17242c;border:1px solid #2e414a;border-radius:12px;padding:10px;min-width:0}.ref img{width:100%;height:190px;object-fit:contain;background:#0c1318;border-radius:8px;display:block}.ref strong{display:block;margin-top:9px;font-size:13px}.ref small{display:block;color:var(--muted);font-size:11px;line-height:1.7;margin-top:5px}
+h2{font-size:18px;margin:22px 0 12px}.foot{color:#83969d;font-size:11px;line-height:1.8;margin-top:15px}
+@media(max-width:760px){body{padding:12px}.refs{grid-template-columns:repeat(2,minmax(0,1fr))}.ref img{height:150px}.hint{display:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="intro"><div><h1>سنگی که برگشت</h1><div class="sub">پیش‌نمایش تصویریِ مبتنی بر تصاویر مرجع پروژه — حرکت دوربین، زوم نرم و تدوین نماها</div></div><div class="sub">۱۶ ثانیه · بدون کتابخانهٔ آنلاین</div></div>
+<div class="stage"><canvas id="screen" width="1280" height="720" aria-label="پیش‌نمایش تصویری"></canvas><div class="tag" id="shotTag">هنو · کارگاه</div><div class="hint">IMAGE-BASED ANIMATIC</div></div>
+<div class="controls">
+<button id="play">▶ پخش</button><button id="reset">↺ از ابتدا</button>
+<input id="seek" type="range" min="0" max="16" step=".05" value="0" aria-label="موقعیت زمانی">
+<span class="time" id="clock">00:00 / 00:16</span>
+<button id="record">● ضبط WebM</button><button id="stop" disabled>■ پایان ضبط</button><a id="download" class="download" style="display:none" download="sangi-ke-bargasht-preview.webm">دریافت ویدئو</a>
+</div>
+<div class="notice"><strong>نکته:</strong> این نسخه از تصاویر مرجع واقعی مخزن استفاده می‌کند، اما هنوز انیمیشن سه‌بعدی یا حرکت مستقل دست و صورت نیست؛ حرکت سینمایی با زوم و پن روی تصویر انجام می‌شود. برای اجرای کاملاً آفلاین، کل مخزن را ZIP بگیرید و همین فایل را در همین مسیر باز کنید تا پوشهٔ <code>assets/images</code> کنار آن باقی بماند. اگر فایل تصویر پیدا نشود، نسخهٔ آنلاین مخزن را امتحان می‌کند.</div>
+<h2>تصاویر مرجع استفاده‌شده</h2>
+<div class="refs">
+<div class="ref"><img data-local="../../assets/images/هنو.png" data-remote="https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%87%D9%86%D9%88.png" alt="مرجع هنو"><strong>هنو</strong><small>نمای نزدیک و حرکت آرام دوربین برای شروع صحنه.</small></div>
+<div class="ref"><img data-local="../../assets/images/نیرداد.png" data-remote="https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%86%DB%8C%D8%B1%D8%AF%D8%A7%D8%AF.png" alt="مرجع تیرداد"><strong>تیرداد</strong><small>نمای واکنش و مشاهده؛ نام فایل در مخزن «نیرداد.png» است.</small></div>
+<div class="ref"><img data-local="../../assets/images/نماد روی سنگ.1.png" data-remote="https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%86%D9%85%D8%A7%D8%AF%20%D8%B1%D9%88%DB%8C%20%D8%B3%D9%86%DA%AF.1.png" alt="نشان روی سنگ"><strong>نشان روی سنگ</strong><small>نمای جزئیات؛ به‌عنوان درج تصویری مستقل، نه ادعای یکی‌بودن دو نشان.</small></div>
+<div class="ref"><img data-local="../../assets/images/سالار کاروان.png" data-remote="https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D8%B3%D8%A7%D9%84%D8%A7%D8%B1%20%DA%A9%D8%A7%D8%B1%D9%88%D8%A7%D9%86.png" alt="مرجع سالار کاروان"><strong>سالار کاروان</strong><small>فقط مرجع تداوم طراحی شخصیت؛ در صحنهٔ کارگاه حاضر نیست.</small></div>
+</div>
+<div class="foot">نمونهٔ تولیدیِ آزمایشی است و به‌معنای تأیید نهایی تاریخی، روایی یا کانن نیست. ضبط ویدئو به پشتیبانی مرورگر از MediaRecorder نیاز دارد.</div>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
+const shots=[
+ {src:'../../assets/images/هنو.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%87%D9%86%D9%88.png',title:'هنو · کارگاه',caption:'صبح آرام؛ هنو سنگ آبی را با دقت بررسی می‌کند.',focus:[.5,.43],zoom:[1.02,1.15]},
+ {src:'../../assets/images/نیرداد.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%86%DB%8C%D8%B1%D8%AF%D8%A7%D8%AF.png',title:'تیرداد · مشاهده',caption:'تیرداد نزدیک می‌شود و به نشانه‌ها نگاه می‌کند.',focus:[.52,.42],zoom:[1.05,1.17]},
+ {src:'../../assets/images/نماد روی سنگ.1.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%86%D9%85%D8%A7%D8%AF%20%D8%B1%D9%88%DB%8C%20%D8%B3%D9%86%DA%AF.1.png',title:'نشان · نمای جزئیات',caption:'جزئیات نشان دیده می‌شود؛ شباهت هنوز به معنای یکی‌بودن نیست.',focus:[.5,.5],zoom:[1.01,1.24]},
+ {src:'../../assets/images/هنو.png',remote:'https://raw.githubusercontent.com/ghadirb/iran-storyworld/main/assets/images/%D9%87%D9%86%D9%88.png',title:'هنو · مکث و اندیشه',caption:'پیش از نتیجه‌گیری، مشاهده و حدس از هم جدا می‌مانند.',focus:[.48,.44],zoom:[1.12,1.04]}
+];
+const imgs=shots.map(s=>{const im=new Image();im.onload=()=>draw(t);im.onerror=()=>{if(!im.dataset.remoteTried){im.dataset.remoteTried='1';im.crossOrigin='anonymous';im.src=s.remote;}else{draw(t);}};im.src=s.src;return im;});
+document.querySelectorAll('.ref img').forEach(im=>{im.onerror=()=>{if(!im.dataset.remoteTried){im.dataset.remoteTried='1';im.src=im.dataset.remote;}else{im.alt+=' (بارگذاری نشد)';}};im.src=im.dataset.local;});
+const duration=16;let t=0,playing=false,last=0,raf=0,recorder=null,chunks=[];
+const ease=x=>x*x*(3-2*x);
+function draw(time){
+ t=Math.max(0,Math.min(duration,time));const idx=Math.min(3,Math.floor(t/4)),p=(t-idx*4)/4,s=shots[idx],im=imgs[idx];
+ ctx.clearRect(0,0,1280,720);ctx.fillStyle='#101820';ctx.fillRect(0,0,1280,720);
+ if(im&&im.complete&&im.naturalWidth){
+  const iw=im.naturalWidth,ih=im.naturalHeight,cover=Math.max(1280/iw,720/ih),z=s.zoom[0]+(s.zoom[1]-s.zoom[0])*ease(p);
+  const sw=1280/(cover*z),sh=720/(cover*z),cx=s.focus[0]*iw,cy=s.focus[1]*ih;
+  const sx=Math.max(0,Math.min(iw-sw,cx-sw/2)),sy=Math.max(0,Math.min(ih-sh,cy-sh/2));
+  ctx.drawImage(im,sx,sy,Math.min(sw,iw),Math.min(sh,ih),0,0,1280,720);
+  const grad=ctx.createLinearGradient(0,0,0,720);grad.addColorStop(0,'#071017aa');grad.addColorStop(.35,'#07101700');grad.addColorStop(.62,'#07101711');grad.addColorStop(1,'#071017e8');ctx.fillStyle=grad;ctx.fillRect(0,0,1280,720);
+ }else{
+  ctx.fillStyle='#b9d2d2';ctx.font='28px Tahoma';ctx.textAlign='center';ctx.fillText('در حال بارگذاری تصاویر مرجع…',640,350);
+ }
+ ctx.textAlign='right';ctx.fillStyle='#eaf0eb';ctx.font='bold 30px Tahoma';ctx.fillText(s.title,1210,620);
+ ctx.fillStyle='#d4dfd9';ctx.font='22px Tahoma';ctx.fillText(s.caption,1210,666);
+ ctx.fillStyle='#ffffff55';ctx.fillRect(0,704,1280,5);ctx.fillStyle='#82c8d0';ctx.fillRect(0,704,1280*(t/duration),5);
+ document.getElementById('shotTag').textContent=s.title;
+ document.getElementById('clock').textContent='00:'+String(Math.floor(t)).padStart(2,'0')+' / 00:16';
+ document.getElementById('seek').value=t;
+}
+function tick(now){if(!playing)return;if(!last)last=now;t+=(now-last)/1000;last=now;if(t>=duration){t=duration;playing=false;document.getElementById('play').textContent='▶ پخش';}draw(t);if(playing)raf=requestAnimationFrame(tick);}
+document.getElementById('play').onclick=()=>{if(playing){playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ ادامه';return;}if(t>=duration)t=0;playing=true;last=0;document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);};
+document.getElementById('reset').onclick=()=>{playing=false;cancelAnimationFrame(raf);t=0;last=0;draw(0);document.getElementById('play').textContent='▶ پخش';};
+document.getElementById('seek').oninput=e=>{playing=false;cancelAnimationFrame(raf);last=0;t=Number(e.target.value);draw(t);document.getElementById('play').textContent='▶ پخش';};
+document.getElementById('record').onclick=()=>{
+ if(!canvas.captureStream||!window.MediaRecorder){alert('ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود.');return;}
+ try{const stream=canvas.captureStream(30);chunks=[];recorder=new MediaRecorder(stream,{mimeType:'video/webm'});recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'}),url=URL.createObjectURL(blob),a=document.getElementById('download');a.href=url;a.style.display='inline-block';document.getElementById('record').disabled=false;document.getElementById('stop').disabled=true;stream.getTracks().forEach(x=>x.stop());};recorder.start();document.getElementById('record').disabled=true;document.getElementById('stop').disabled=false;t=0;playing=true;last=0;document.getElementById('play').textContent='Ⅱ مکث';raf=requestAnimationFrame(tick);}catch(e){alert('ضبط شروع نشد؛ Chrome یا Edge به‌روز را امتحان کنید.');}
+};
+document.getElementById('stop').onclick=()=>{if(recorder&&recorder.state!=='inactive')recorder.stop();playing=false;cancelAnimationFrame(raf);document.getElementById('play').textContent='▶ پخش';};
+draw(0);
+})();
+</script>
+</body>
+</html>
