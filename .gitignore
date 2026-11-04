@@ -26,3 +26,5 @@ android/build-*.log
 # پایتون
 __pycache__/
 *.pyc
+build/
+build-cache/
