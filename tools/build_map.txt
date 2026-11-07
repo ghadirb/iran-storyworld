@@ -16,3 +16,4 @@ c3ep01 build_ch03_ep01_draft_music.py out/ch03_ep01_draft_music.mp4
 c3ep02 build_ch03_ep02_draft_music.py out/ch03_ep02_draft_music.mp4
 c3ep03 build_ch03_ep03_draft_music.py out/ch03_ep03_draft_music.mp4
 c3ep04 build_ch03_ep04_draft_music.py out/ch03_ep04_draft_music.mp4
+c3ep05 build_ch03_ep05_draft_music.py out/ch03_ep05_draft_music.mp4
