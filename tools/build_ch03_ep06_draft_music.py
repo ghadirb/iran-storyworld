@@ -19,8 +19,8 @@ TIMELINE = {  # نما: (خطوط صوتی، تصویر)
 }
 TRIM = {}
 BLUR = {}
-# کلیپ ۱۳۴: بعد از ≈۲ ثانیه پس‌زمینه به شهری با گنبد و نخل (معماری ناهمزمان) تغییر می‌کند و تیرداد از قاب می‌رود؛ برای همین فقط تصویر ۱۳۴ با زوم نرم استفاده می‌شود
-STILL = {"134"}
+# (کلیپ ۱۳۴ و تصویر/کلیپ ۱۳۳ ۸ نوامبر ۲۰۲۶ توسط مالک جایگزین شد؛ دیگر نیازی به STILL نیست)
+STILL = set()
 ENC = ["-c:v","libx264","-preset","veryfast","-crf","20","-pix_fmt","yuv420p"]
 def FIT(w, h): return (f"split[a][b];[a]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},boxblur=30:6[bg];"
                        f"[b]scale={w}:{h}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,fps={FPS}")
